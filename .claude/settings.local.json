@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Program Files/PostgreSQL/16/data/**)",
+      "Read(//c/Program Files/PostgreSQL/17/data/**)",
+      "Bash(C:/Program Files/PostgreSQL/17/bin/pg_ctl start *)",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -p 9876 -c \"CREATE USER bomatic WITH PASSWORD 'bomatic';\")",
+      "Bash(PGPASSWORD=postgres \"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -p 9876 -c \"CREATE DATABASE bomatic OWNER bomatic;\")",
+      "Bash(grep -v \"^#\\\\|^$\" \"C:/Program Files/PostgreSQL/17/data/pg_hba.conf\")",
+      "Read(//c/Users/hp/AppData/Roaming/postgresql/**)",
+      "Read(//c/Users/hp/AppData/Roaming/**)",
+      "Bash(C:/Program Files/PostgreSQL/17/bin/pg_ctl reload *)",
+      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -p 9876 -c \"CREATE USER bomatic WITH PASSWORD 'bomatic';\")",
+      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -p 9876 -c \"CREATE DATABASE bomatic OWNER bomatic;\")",
+      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -h 127.0.0.1 -p 9876 -c \"CREATE USER bomatic WITH PASSWORD 'bomatic';\")",
+      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql\" -U postgres -h 127.0.0.1 -p 9876 -c \"CREATE DATABASE bomatic OWNER bomatic;\")",
+      "PowerShell(Set-Location \"C:\\\\Training_project\\\\BOMATIC\\\\backend\"; $env:DATABASE_URL = \"postgresql+psycopg://bomatic:bomatic@localhost:9876/bomatic\"; .\\\\.venv\\\\Scripts\\\\alembic revision --autogenerate -m \"initial_schema\" 2>&1)",
+      "Bash(timeout 120 bash *)",
+      "Bash(echo \"Test RFP document content. Vendor shall provide 24x7 support. This is a mandatory requirement.\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/rfp/packages -F \"opportunity_id=OP-2025-154381\" -F \"client_name=Saudi Aramco\" -F \"project_name=DMM7 Storage\" -F \"files=@/tmp/test_rfp.txt\")",
+      "Bash(curl *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Training_project\\\\BOMATIC\\\\backend\\\\app\\\\models\" -File -Force -ErrorAction SilentlyContinue | % { $_.Name })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Training_project\\\\BOMATIC\\\\backend\\\\app\\\\routers\" -File -Force -ErrorAction SilentlyContinue | % { $_.Name })",
+      "PowerShell(tree \"C:\\\\Training_project\\\\BOMATIC\" /F /A /ignore .venv,node_modules,__pycache__,.git 2>$null | Select-Object -First 200)",
+      "Bash(.venv/Scripts/pip install *)"
+    ]
+  }
+}

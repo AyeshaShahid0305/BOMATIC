@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import health, rfp
+from app.api.e1_router import router as e1_router
 
 app = FastAPI(
     title="BOMATIC",
@@ -17,3 +18,4 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(rfp.router, prefix="/api/v1")
+app.include_router(e1_router, prefix="/api")

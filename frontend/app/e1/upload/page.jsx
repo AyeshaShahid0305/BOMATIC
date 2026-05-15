@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import E1Checkpoint from "../../../components/E1Checkpoint";
+import E1Checkpoint from "../../../src/components/E1Checkpoint";
 
 export default function E1UploadPage() {
   const [files, setFiles] = useState([]);

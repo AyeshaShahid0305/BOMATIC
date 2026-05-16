@@ -7,6 +7,8 @@ import anthropic
 from .models import Requirement
 from .step2_missing_docs import ARAMCO_STD_PATTERNS, INTL_STD_PATTERNS
 
+CLAUDE_MODEL = "claude-sonnet-4-5"
+
 # ---------------------------------------------------------------------------
 # Patterns compiled at module load time — RFP_Compliance_Patterns.md §1
 # ---------------------------------------------------------------------------
@@ -176,8 +178,13 @@ def _classify_ambiguous_with_ai(
     if not sentences:
         return []
 
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("Warning: ANTHROPIC_API_KEY is not set — skipping AI classification (is_ai_enhanced=False)")
+        return []
+
     try:
-        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        client = anthropic.Anthropic(api_key=api_key)
         prompt = (
             "You are classifying sentences from a MENA procurement RFP.\n"
             "Classify each sentence as: mandatory, optional, conditional, or not_a_requirement.\n\n"
@@ -192,7 +199,7 @@ def _classify_ambiguous_with_ai(
         )
         response = client.messages.create(
             model="claude-sonnet-4-5",
-            max_tokens=1000,
+            max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )
         items = json.loads(response.content[0].text)
@@ -228,10 +235,11 @@ def extract_requirements(
     # AI call for ambiguous sentences — one batched call across all files
     if all_ambiguous:
         ai_results = _classify_ambiguous_with_ai(all_ambiguous)
+        counter = len(all_requirements)
         for classification, sentence, confidence in ai_results:
             if classification == "not_a_requirement":
                 continue
-            counter = len(all_requirements) + 1
+            counter += 1
             all_requirements.append(Requirement(
                 id=f"R-{str(counter).zfill(3)}",
                 text=sentence,

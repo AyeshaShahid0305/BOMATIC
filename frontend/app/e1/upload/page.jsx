@@ -47,7 +47,7 @@ export default function E1UploadPage() {
   }
 
   if (result) {
-    return <E1Checkpoint result={result} onProceed={() => router.push("/e1/step6")} />;
+    return <E1Checkpoint result={result} onProceed={() => router.push("/e1/checkpoint")} />;
   }
 
   return (

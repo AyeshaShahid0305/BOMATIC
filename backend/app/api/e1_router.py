@@ -26,6 +26,8 @@ async def analyze_rfp(files: list[UploadFile] = File(...)):
         for upload in files:
             name = Path(upload.filename or "file").name
             dest = tmp_dir / name
+            if upload.size is not None and upload.size > 20 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="File too large. Maximum size is 20MB.")
             dest.write_bytes(await upload.read())
 
             classification = classify_file(

@@ -19,12 +19,12 @@ export default function Home() {
               Upload an RFP document package to start the 12-step E1 parsing pipeline.
               Produces a compliance matrix, requirements baseline, and risk flags report.
             </p>
-            <button
-              disabled
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium opacity-40 cursor-not-allowed"
+            <a
+              href="/e1/upload"
+              className="block w-full py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium text-center hover:bg-blue-700"
             >
-              Upload Files — coming in Phase 1
-            </button>
+              Upload Files
+            </a>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

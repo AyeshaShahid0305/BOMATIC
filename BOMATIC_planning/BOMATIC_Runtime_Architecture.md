@@ -1,5 +1,27 @@
 # BOMATIC — Runtime Architecture
 
+## Current Build Status (as of May 2026)
+
+### What is ACTUALLY built and working:
+- E1 Steps 1–4: file upload, text extraction, file classification, missing document detection, requirements extraction, legal trap detection
+- E1 Checkpoint UI: displays classified files, requirements, risk flags
+- E2: BoQ template detector and parser (FORMAT_1_CCW only) — no pricing, no Excel output
+- E3: Section title list and GBB multiplier table only — no DOCX generation
+- Basic FastAPI backend with database (PostgreSQL)
+- Basic Next.js frontend (home page + E1 upload page)
+
+### What is NOT yet built:
+- E1 Steps 5–12: compliance matrix generation, framework mapping, bilingual detection, DOCX/XLSX output
+- E2: pricing engine, catalog lookup, EoX checking, licensing calculator, Excel writeback
+- E3: proposal generation, DOCX output, all AI narrative sections
+- E4: does not exist
+- E5: does not exist
+- Pipeline coordinator: engines are not connected to each other
+- Authentication: middleware exists but no user management
+- Any downloadable output files
+
+---
+
 **Version:** 2.0 (replaces Hub-Spoke Architecture v1.0)
 **Date:** 2026-05-09
 **Change:** Complete redesign. Old version treated everything as Claude API calls. New version is hybrid: 65% deterministic code, 26% AI-with-validation, 9% pure AI.

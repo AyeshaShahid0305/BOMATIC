@@ -1,0 +1,560 @@
+[
+  {
+    "id": "A.5.1",
+    "name": "Policies for information security",
+    "domain": "Organizational Controls",
+    "description": "Information security policies shall be defined, approved by management, published, communicated to employees and relevant external parties, and reviewed at planned intervals or when significant changes occur."
+  },
+  {
+    "id": "A.5.2",
+    "name": "Information security roles and responsibilities",
+    "domain": "Organizational Controls",
+    "description": "Information security roles and responsibilities shall be defined and allocated according to the organization's needs, ensuring accountability for protecting information assets across all functions."
+  },
+  {
+    "id": "A.5.3",
+    "name": "Segregation of duties",
+    "domain": "Organizational Controls",
+    "description": "Conflicting duties and areas of responsibility shall be segregated to reduce opportunities for unauthorized or unintentional modification or misuse of the organization's assets."
+  },
+  {
+    "id": "A.5.4",
+    "name": "Management responsibilities",
+    "domain": "Organizational Controls",
+    "description": "Management shall require all personnel to apply information security in accordance with the established information security policy, topic-specific policies, and procedures of the organization."
+  },
+  {
+    "id": "A.5.5",
+    "name": "Contact with authorities",
+    "domain": "Organizational Controls",
+    "description": "The organization shall establish and maintain contact with relevant authorities including law enforcement, regulatory bodies, and national cybersecurity agencies to facilitate timely incident reporting and response coordination."
+  },
+  {
+    "id": "A.5.6",
+    "name": "Contact with special interest groups",
+    "domain": "Organizational Controls",
+    "description": "The organization shall establish and maintain contact with special interest groups, security forums, and professional associations to stay current on threat intelligence and security best practices."
+  },
+  {
+    "id": "A.5.7",
+    "name": "Threat intelligence",
+    "domain": "Organizational Controls",
+    "description": "Information relating to information security threats shall be collected and analyzed to produce threat intelligence, which shall be used to inform security decisions and controls."
+  },
+  {
+    "id": "A.5.8",
+    "name": "Information security in project management",
+    "domain": "Organizational Controls",
+    "description": "Information security shall be integrated into project management throughout the project lifecycle, ensuring that security risks are identified and addressed for all types of projects."
+  },
+  {
+    "id": "A.5.9",
+    "name": "Inventory of information and other associated assets",
+    "domain": "Organizational Controls",
+    "description": "An inventory of information and other associated assets including hardware, software, and data shall be developed, maintained, and kept up to date, with owners identified for each asset."
+  },
+  {
+    "id": "A.5.10",
+    "name": "Acceptable use of information and other associated assets",
+    "domain": "Organizational Controls",
+    "description": "Rules for the acceptable use and procedures for handling information and other associated assets shall be identified, documented, and implemented, covering employees, contractors, and third parties."
+  },
+  {
+    "id": "A.5.11",
+    "name": "Return of assets",
+    "domain": "Organizational Controls",
+    "description": "Personnel and other interested parties shall return all organizational assets in their possession upon change of employment, contract, or agreement, with a formal return process documented."
+  },
+  {
+    "id": "A.5.12",
+    "name": "Classification of information",
+    "domain": "Organizational Controls",
+    "description": "Information shall be classified according to the information security needs of the organization based on confidentiality, integrity, and availability requirements, taking regulatory and contractual obligations into account."
+  },
+  {
+    "id": "A.5.13",
+    "name": "Labelling of information",
+    "domain": "Organizational Controls",
+    "description": "An appropriate set of procedures for information labelling shall be developed and implemented in accordance with the information classification scheme adopted by the organization."
+  },
+  {
+    "id": "A.5.14",
+    "name": "Information transfer",
+    "domain": "Organizational Controls",
+    "description": "Information transfer rules, procedures, and controls shall be in place for all types of transfer facilities including electronic, physical, and verbal, protecting information from interception, modification, and unauthorized disclosure during transfer."
+  },
+  {
+    "id": "A.5.15",
+    "name": "Access control",
+    "domain": "Organizational Controls",
+    "description": "Rules to control physical and logical access to information and other associated assets shall be established and implemented based on business and information security requirements, applying least-privilege principles."
+  },
+  {
+    "id": "A.5.16",
+    "name": "Identity management",
+    "domain": "Organizational Controls",
+    "description": "The full lifecycle of identities shall be managed, including allocation of unique identifiers to all individuals and systems, verification of identity before granting access, and timely revocation when no longer required."
+  },
+  {
+    "id": "A.5.17",
+    "name": "Authentication information",
+    "domain": "Organizational Controls",
+    "description": "Allocation and management of authentication information shall be controlled through a formal management process including policies for password complexity, length, expiry, and prohibition of password sharing."
+  },
+  {
+    "id": "A.5.18",
+    "name": "Access rights",
+    "domain": "Organizational Controls",
+    "description": "Access rights to information and other associated assets shall be provisioned, reviewed, modified, and removed in accordance with the organization's access control policy, with formal review at least every 12 months."
+  },
+  {
+    "id": "A.5.19",
+    "name": "Information security in supplier relationships",
+    "domain": "Organizational Controls",
+    "description": "Processes and procedures shall be defined and implemented to manage information security risks associated with the use of suppliers' products and services, including pre-engagement security assessments."
+  },
+  {
+    "id": "A.5.20",
+    "name": "Addressing information security within supplier agreements",
+    "domain": "Organizational Controls",
+    "description": "Relevant information security requirements shall be established and agreed with each supplier based on the type of supplier relationship, covering data protection, incident notification, audit rights, and security standards compliance."
+  },
+  {
+    "id": "A.5.21",
+    "name": "Managing information security in the ICT supply chain",
+    "domain": "Organizational Controls",
+    "description": "Processes and procedures shall be defined and implemented to manage information security risks associated with the ICT products and services supply chain, including hardware tampering, software integrity, and component traceability."
+  },
+  {
+    "id": "A.5.22",
+    "name": "Monitoring, review and change management of supplier services",
+    "domain": "Organizational Controls",
+    "description": "The organization shall regularly monitor, review, evaluate, and manage changes to supplier information security practices and service delivery, ensuring continued compliance with security requirements throughout the contract term."
+  },
+  {
+    "id": "A.5.23",
+    "name": "Information security for use of cloud services",
+    "domain": "Organizational Controls",
+    "description": "Processes for acquisition, use, management, and exit from cloud services shall be established in accordance with the organization's information security requirements, covering shared responsibility, data residency, and encryption."
+  },
+  {
+    "id": "A.5.24",
+    "name": "Information security incident management planning and preparation",
+    "domain": "Organizational Controls",
+    "description": "The organization shall plan and prepare for managing information security incidents by defining incident response roles, responsibilities, procedures, and communication plans before incidents occur."
+  },
+  {
+    "id": "A.5.25",
+    "name": "Assessment and decision on information security events",
+    "domain": "Organizational Controls",
+    "description": "The organization shall assess information security events and decide if they are to be categorized as information security incidents using defined classification criteria and severity levels."
+  },
+  {
+    "id": "A.5.26",
+    "name": "Response to information security incidents",
+    "domain": "Organizational Controls",
+    "description": "Information security incidents shall be responded to in accordance with documented procedures covering containment, eradication, recovery, evidence preservation, and communication with affected parties and authorities."
+  },
+  {
+    "id": "A.5.27",
+    "name": "Learning from information security incidents",
+    "domain": "Organizational Controls",
+    "description": "Knowledge gained from information security incidents shall be used to strengthen and improve security controls, with post-incident reviews conducted for all significant incidents and lessons documented and acted upon."
+  },
+  {
+    "id": "A.5.28",
+    "name": "Collection of evidence",
+    "domain": "Organizational Controls",
+    "description": "The organization shall establish and apply procedures for the identification, collection, acquisition, and preservation of evidence related to information security incidents in a manner suitable for legal proceedings."
+  },
+  {
+    "id": "A.5.29",
+    "name": "Information security during disruption",
+    "domain": "Organizational Controls",
+    "description": "The organization shall plan how to maintain information security at an appropriate level during disruption, ensuring that critical security controls remain operational or are restored within defined timeframes during adverse events."
+  },
+  {
+    "id": "A.5.30",
+    "name": "ICT readiness for business continuity",
+    "domain": "Organizational Controls",
+    "description": "ICT readiness shall be planned, implemented, maintained, and tested based on business continuity objectives and ICT continuity requirements, with recovery time objectives (RTO) and recovery point objectives (RPO) defined for critical systems."
+  },
+  {
+    "id": "A.5.31",
+    "name": "Legal, statutory, regulatory and contractual requirements",
+    "domain": "Organizational Controls",
+    "description": "Legal, statutory, regulatory, and contractual requirements relevant to information security shall be identified, documented, and kept up to date, with compliance procedures in place for each applicable requirement."
+  },
+  {
+    "id": "A.5.32",
+    "name": "Intellectual property rights",
+    "domain": "Organizational Controls",
+    "description": "The organization shall implement appropriate procedures to protect intellectual property rights including software licensing compliance, proprietary information handling, and protection against unauthorized copying or use."
+  },
+  {
+    "id": "A.5.33",
+    "name": "Protection of records",
+    "domain": "Organizational Controls",
+    "description": "Records shall be protected from loss, destruction, falsification, unauthorized access, and unauthorized release in accordance with legal, regulatory, contractual, and business requirements, with defined retention periods and disposal methods."
+  },
+  {
+    "id": "A.5.34",
+    "name": "Privacy and protection of personally identifiable information",
+    "domain": "Organizational Controls",
+    "description": "The organization shall identify and meet requirements for privacy and protection of personally identifiable information (PII) in accordance with applicable laws, regulations, and contractual requirements, implementing privacy by design principles."
+  },
+  {
+    "id": "A.5.35",
+    "name": "Independent review of information security",
+    "domain": "Organizational Controls",
+    "description": "The organization's approach to managing information security and its implementation shall be reviewed independently at planned intervals or when significant changes occur, by qualified auditors independent of the area under review."
+  },
+  {
+    "id": "A.5.36",
+    "name": "Compliance with policies, rules and standards for information security",
+    "domain": "Organizational Controls",
+    "description": "Compliance with information security policies, topic-specific policies, rules, and standards shall be regularly reviewed by managers, with non-compliance tracked, reported, and remediated."
+  },
+  {
+    "id": "A.5.37",
+    "name": "Documented operating procedures",
+    "domain": "Organizational Controls",
+    "description": "Operating procedures for information processing facilities shall be documented, maintained, and made available to all users who need them, covering startup, shutdown, error handling, and system maintenance activities."
+  },
+  {
+    "id": "A.6.1",
+    "name": "Screening",
+    "domain": "People Controls",
+    "description": "Background verification checks shall be carried out on all candidates for employment in accordance with applicable laws, regulations, and proportional to business requirements and the classification of information to be accessed."
+  },
+  {
+    "id": "A.6.2",
+    "name": "Terms and conditions of employment",
+    "domain": "People Controls",
+    "description": "Employment contractual agreements shall state employees' and the organization's responsibilities for information security, including confidentiality obligations, acceptable use, and consequences of security policy violations."
+  },
+  {
+    "id": "A.6.3",
+    "name": "Information security awareness, education and training",
+    "domain": "People Controls",
+    "description": "All employees and relevant contractors shall receive appropriate information security awareness education and training including regular updates of the organization's policies and procedures relevant to their job function."
+  },
+  {
+    "id": "A.6.4",
+    "name": "Disciplinary process",
+    "domain": "People Controls",
+    "description": "A formal disciplinary process shall be in place and communicated to take action against personnel who have committed an information security policy violation, proportional to the severity and type of violation."
+  },
+  {
+    "id": "A.6.5",
+    "name": "Responsibilities after termination or change of employment",
+    "domain": "People Controls",
+    "description": "Information security responsibilities and duties that remain valid after termination or change of employment shall be defined, communicated to the employee, and enforced through contractual obligations including NDAs."
+  },
+  {
+    "id": "A.6.6",
+    "name": "Confidentiality or non-disclosure agreements",
+    "domain": "People Controls",
+    "description": "Confidentiality or non-disclosure agreements reflecting the organization's needs for protection of information shall be identified, documented, regularly reviewed, and signed by employees, contractors, and third parties."
+  },
+  {
+    "id": "A.6.7",
+    "name": "Remote working",
+    "domain": "People Controls",
+    "description": "Security measures shall be implemented when personnel are working remotely to protect information accessed, processed, or stored outside the organization's premises, including secure access controls, device management, and encrypted communications."
+  },
+  {
+    "id": "A.6.8",
+    "name": "Information security event reporting",
+    "domain": "People Controls",
+    "description": "Employees shall be required to report observed or suspected information security events through appropriate channels as quickly as possible, with clear reporting procedures and protection from retaliation for good-faith reporting."
+  },
+  {
+    "id": "A.7.1",
+    "name": "Physical security perimeters",
+    "domain": "Physical Controls",
+    "description": "Security perimeters shall be defined and used to protect areas that contain information and other associated assets, with clear physical boundaries such as fences, walls, card-controlled entry gates, and staffed reception desks."
+  },
+  {
+    "id": "A.7.2",
+    "name": "Physical entry",
+    "domain": "Physical Controls",
+    "description": "Secure areas shall be protected by appropriate entry controls to ensure that only authorized personnel are allowed access, using multi-factor physical authentication for sensitive areas such as data centers and server rooms."
+  },
+  {
+    "id": "A.7.3",
+    "name": "Securing offices, rooms and facilities",
+    "domain": "Physical Controls",
+    "description": "Physical security for offices, rooms, and facilities shall be designed and implemented to prevent unauthorized access, theft, and damage to information assets housed within those areas."
+  },
+  {
+    "id": "A.7.4",
+    "name": "Physical security monitoring",
+    "domain": "Physical Controls",
+    "description": "Premises shall be continuously monitored for unauthorized physical access using CCTV surveillance, alarm systems, and security personnel, with monitoring records retained for a sufficient period to support investigations."
+  },
+  {
+    "id": "A.7.5",
+    "name": "Protecting against physical and environmental threats",
+    "domain": "Physical Controls",
+    "description": "Physical protection against natural disasters, malicious attack, and accidents shall be designed and implemented, including protection against fire, flood, earthquake, explosion, civil unrest, and other forms of natural or man-made disaster."
+  },
+  {
+    "id": "A.7.6",
+    "name": "Working in secure areas",
+    "domain": "Physical Controls",
+    "description": "Security measures for working in secure areas shall be designed and applied, including restrictions on the use of recording devices, prohibition of unescorted external parties, and clean-desk enforcement."
+  },
+  {
+    "id": "A.7.7",
+    "name": "Clear desk and clear screen",
+    "domain": "Physical Controls",
+    "description": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities shall be defined and enforced to reduce the risk of unauthorized access, loss of, or damage to information."
+  },
+  {
+    "id": "A.7.8",
+    "name": "Equipment siting and protection",
+    "domain": "Physical Controls",
+    "description": "Equipment shall be sited and protected to reduce the risks from physical and environmental threats, and opportunities for unauthorized access, minimizing exposure to power failures, electromagnetic interference, and physical theft."
+  },
+  {
+    "id": "A.7.9",
+    "name": "Security of assets off-premises",
+    "domain": "Physical Controls",
+    "description": "Off-premises assets shall be protected taking into account the different risks of working outside the organization's premises, with controls applied to laptops, mobile devices, and removable media used away from organizational facilities."
+  },
+  {
+    "id": "A.7.10",
+    "name": "Storage media",
+    "domain": "Physical Controls",
+    "description": "Storage media shall be managed through their lifecycle of acquisition, use, transportation, and disposal in accordance with the organization's classification scheme and handling requirements, including secure disposal or sanitization."
+  },
+  {
+    "id": "A.7.11",
+    "name": "Supporting utilities",
+    "domain": "Physical Controls",
+    "description": "Information processing facilities shall be protected from power failures and other disruptions caused by failures in supporting utilities such as electricity, telecommunications, water, gas, sewage, and HVAC using redundant systems."
+  },
+  {
+    "id": "A.7.12",
+    "name": "Cabling security",
+    "domain": "Physical Controls",
+    "description": "Cables carrying power and telecommunications or supporting information services shall be protected from interception, interference, or damage, with cable runs documented and protected from unauthorized access or physical damage."
+  },
+  {
+    "id": "A.7.13",
+    "name": "Equipment maintenance",
+    "domain": "Physical Controls",
+    "description": "Equipment shall be maintained correctly to ensure its continued availability and integrity, following manufacturer-specified service intervals and authorized maintenance procedures, with maintenance records kept."
+  },
+  {
+    "id": "A.7.14",
+    "name": "Secure disposal or re-use of equipment",
+    "domain": "Physical Controls",
+    "description": "Items of equipment containing storage media shall be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use, using approved sanitization methods."
+  },
+  {
+    "id": "A.8.1",
+    "name": "User endpoint devices",
+    "domain": "Technological Controls",
+    "description": "Information stored on, processed by, or accessible via user endpoint devices (laptops, desktops, tablets, mobile phones) shall be protected through a device management policy covering encryption, screen lock, remote wipe, and approved application installation."
+  },
+  {
+    "id": "A.8.2",
+    "name": "Privileged access rights",
+    "domain": "Technological Controls",
+    "description": "The allocation and use of privileged access rights shall be restricted and managed, with privileged accounts subject to enhanced controls including just-in-time access, multi-factor authentication, and session recording."
+  },
+  {
+    "id": "A.8.3",
+    "name": "Information access restriction",
+    "domain": "Technological Controls",
+    "description": "Access to information and application system functions shall be restricted in accordance with the access control policy, implementing role-based access controls (RBAC) and enforcing separation of duties."
+  },
+  {
+    "id": "A.8.4",
+    "name": "Access to source code",
+    "domain": "Technological Controls",
+    "description": "Read and write access to source code, development tools, and software libraries shall be appropriately managed to prevent unauthorized modification, with version control systems enforcing access restrictions."
+  },
+  {
+    "id": "A.8.5",
+    "name": "Secure authentication",
+    "domain": "Technological Controls",
+    "description": "Secure authentication technologies and procedures shall be implemented based on information access restrictions, with multi-factor authentication required for remote access, privileged accounts, and access to sensitive systems."
+  },
+  {
+    "id": "A.8.6",
+    "name": "Capacity management",
+    "domain": "Technological Controls",
+    "description": "The use of resources shall be monitored and adjusted, and projections made of future capacity requirements to ensure required system performance and availability, preventing denial of service through resource exhaustion."
+  },
+  {
+    "id": "A.8.7",
+    "name": "Protection against malware",
+    "domain": "Technological Controls",
+    "description": "Protection against malware shall be implemented and supported by appropriate user awareness, using anti-malware software with real-time scanning, automatic signature updates, and controls over user ability to install software."
+  },
+  {
+    "id": "A.8.8",
+    "name": "Management of technical vulnerabilities",
+    "domain": "Technological Controls",
+    "description": "Information about technical vulnerabilities of information systems shall be obtained, exposure to such vulnerabilities evaluated, and appropriate measures taken to address the associated risk, with critical patches applied within defined timeframes."
+  },
+  {
+    "id": "A.8.9",
+    "name": "Configuration management",
+    "domain": "Technological Controls",
+    "description": "Configurations of hardware, software, services, and networks shall be established, documented, implemented, monitored, and reviewed, with deviations from approved baselines detected and remediated promptly."
+  },
+  {
+    "id": "A.8.10",
+    "name": "Information deletion",
+    "domain": "Technological Controls",
+    "description": "Information stored in information systems, devices, or other storage media shall be deleted when no longer required using approved methods to prevent unauthorized recovery, in compliance with retention policy and regulatory requirements."
+  },
+  {
+    "id": "A.8.11",
+    "name": "Data masking",
+    "domain": "Technological Controls",
+    "description": "Data masking shall be used in accordance with the organization's access control policy and business requirements to protect sensitive data in non-production environments including test, development, and analytics systems."
+  },
+  {
+    "id": "A.8.12",
+    "name": "Data leakage prevention",
+    "domain": "Technological Controls",
+    "description": "Data leakage prevention measures shall be applied to systems, networks, and other devices that process, store, or transmit sensitive information, detecting and preventing unauthorized exfiltration via email, web, USB, and cloud channels."
+  },
+  {
+    "id": "A.8.13",
+    "name": "Information backup",
+    "domain": "Technological Controls",
+    "description": "Backup copies of information, software, and systems shall be maintained and regularly tested in accordance with an agreed backup policy, with backups stored securely and separately from the primary system to protect against ransomware."
+  },
+  {
+    "id": "A.8.14",
+    "name": "Redundancy of information processing facilities",
+    "domain": "Technological Controls",
+    "description": "Information processing facilities shall be implemented with sufficient redundancy to meet availability requirements, with failover capabilities tested regularly to ensure they operate as expected during primary system failures."
+  },
+  {
+    "id": "A.8.15",
+    "name": "Logging",
+    "domain": "Technological Controls",
+    "description": "Logs that record activities, exceptions, faults, and other relevant events shall be produced, stored, protected, and analyzed, with retention periods defined based on regulatory requirements and incident investigation needs."
+  },
+  {
+    "id": "A.8.16",
+    "name": "Monitoring activities",
+    "domain": "Technological Controls",
+    "description": "Networks, systems, and applications shall be monitored for anomalous behavior and potential information security incidents, with automated alerting and defined escalation procedures for detected anomalies."
+  },
+  {
+    "id": "A.8.17",
+    "name": "Clock synchronization",
+    "domain": "Technological Controls",
+    "description": "The clocks of information processing systems shall be synchronized to approved time sources to support log correlation, forensic investigations, and audit trail accuracy across the organization."
+  },
+  {
+    "id": "A.8.18",
+    "name": "Use of privileged utility programs",
+    "domain": "Technological Controls",
+    "description": "The use of utility programs that might be capable of overriding system and application controls shall be restricted and tightly controlled, with usage logged and reviewed by security personnel."
+  },
+  {
+    "id": "A.8.19",
+    "name": "Installation of software on operational systems",
+    "domain": "Technological Controls",
+    "description": "Procedures and measures shall be implemented to securely manage software installation on operational systems, restricting installation to authorized software and preventing users from installing unapproved applications."
+  },
+  {
+    "id": "A.8.20",
+    "name": "Networks security",
+    "domain": "Technological Controls",
+    "description": "Networks and network devices shall be secured, managed, and controlled to protect information in systems and applications, implementing firewalls, IPS, network access control, and encrypted communications."
+  },
+  {
+    "id": "A.8.21",
+    "name": "Security of network services",
+    "domain": "Technological Controls",
+    "description": "Security mechanisms, service levels, and service requirements of all network services shall be identified, implemented, and monitored, whether services are provided internally or outsourced, covering SLAs and security obligations."
+  },
+  {
+    "id": "A.8.22",
+    "name": "Segregation of networks",
+    "domain": "Technological Controls",
+    "description": "Groups of information services, users, and information systems shall be segregated in the organization's networks using VLANs, firewalls, and DMZ architectures to limit the impact of security incidents and unauthorized access."
+  },
+  {
+    "id": "A.8.23",
+    "name": "Web filtering",
+    "domain": "Technological Controls",
+    "description": "Access to external websites shall be managed to reduce exposure to malicious content, with web filtering controls blocking access to known malicious sites, inappropriate categories, and unauthorized cloud services."
+  },
+  {
+    "id": "A.8.24",
+    "name": "Use of cryptography",
+    "domain": "Technological Controls",
+    "description": "Rules for the effective use of cryptography including cryptographic key management shall be defined and implemented to protect the confidentiality, integrity, and authenticity of information at rest and in transit."
+  },
+  {
+    "id": "A.8.25",
+    "name": "Secure development life cycle",
+    "domain": "Technological Controls",
+    "description": "Rules for the secure development of software and systems shall be established and applied, integrating security requirements, threat modeling, secure design principles, and security testing throughout the development lifecycle."
+  },
+  {
+    "id": "A.8.26",
+    "name": "Application security requirements",
+    "domain": "Technological Controls",
+    "description": "Information security requirements shall be identified, specified, and approved when developing or acquiring applications, covering authentication, authorization, input validation, output encoding, and protection against OWASP Top 10 vulnerabilities."
+  },
+  {
+    "id": "A.8.27",
+    "name": "Secure system architecture and engineering principles",
+    "domain": "Technological Controls",
+    "description": "Principles for engineering secure systems shall be established, documented, maintained, and applied to any information system implementation activities, applying zero-trust, defense-in-depth, and least-privilege architecture principles."
+  },
+  {
+    "id": "A.8.28",
+    "name": "Secure coding",
+    "domain": "Technological Controls",
+    "description": "Secure coding principles shall be applied to software development to reduce the number of potential information security vulnerabilities, covering common vulnerability classes and enforced through code reviews and static analysis tools."
+  },
+  {
+    "id": "A.8.29",
+    "name": "Security testing in development and acceptance",
+    "domain": "Technological Controls",
+    "description": "Security testing processes shall be defined and implemented in the development lifecycle, including static analysis, dynamic testing, and penetration testing, with findings tracked to remediation before production release."
+  },
+  {
+    "id": "A.8.30",
+    "name": "Outsourced development",
+    "domain": "Technological Controls",
+    "description": "The organization shall supervise and monitor outsourced system development activities to ensure security requirements are met, including code review rights, secure development standards compliance, and vulnerability disclosure obligations."
+  },
+  {
+    "id": "A.8.31",
+    "name": "Separation of development, test and production environments",
+    "domain": "Technological Controls",
+    "description": "Development, testing, and production environments shall be separated and access controlled to reduce the risks of unauthorized access or changes to the production environment and to protect production data from use in testing."
+  },
+  {
+    "id": "A.8.32",
+    "name": "Change management",
+    "domain": "Technological Controls",
+    "description": "Changes to information processing facilities and information systems shall be subject to change management procedures including security impact assessment, approval, testing, and documentation before implementation in production."
+  },
+  {
+    "id": "A.8.33",
+    "name": "Test information",
+    "domain": "Technological Controls",
+    "description": "Test information shall be appropriately selected, protected, and managed to prevent exposure of sensitive production data in test environments, using data masking, anonymization, or synthetic data generation."
+  },
+  {
+    "id": "A.8.34",
+    "name": "Protection of information systems during audit testing",
+    "domain": "Technological Controls",
+    "description": "Audit tests and other assurance activities involving assessment of operational systems shall be planned and agreed to minimize disruptions to business processes, with audit tools and access rights controlled and monitored."
+  }
+]

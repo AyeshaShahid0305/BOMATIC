@@ -1,0 +1,266 @@
+[
+  {
+    "id": "1-1",
+    "name": "Cybersecurity Strategy",
+    "domain": "Cybersecurity Governance",
+    "description": "The organization shall define and maintain a cybersecurity strategy aligned with its business objectives and national cybersecurity requirements. The strategy must be reviewed and updated at least annually or following significant changes."
+  },
+  {
+    "id": "1-2",
+    "name": "Cybersecurity Policy",
+    "domain": "Cybersecurity Governance",
+    "description": "A formal cybersecurity policy shall be established, approved by senior management, and communicated to all employees and relevant third parties. The policy must cover acceptable use, roles and responsibilities, and consequences of non-compliance."
+  },
+  {
+    "id": "1-3",
+    "name": "Cybersecurity Roles and Responsibilities",
+    "domain": "Cybersecurity Governance",
+    "description": "Cybersecurity roles and responsibilities shall be defined, documented, and assigned to qualified individuals including a designated Cybersecurity Officer. Accountability for cybersecurity decisions must be clearly established at all organizational levels."
+  },
+  {
+    "id": "1-4",
+    "name": "Cybersecurity Risk Management",
+    "domain": "Cybersecurity Governance",
+    "description": "A cybersecurity risk management process shall be established to identify, assess, treat, and monitor cybersecurity risks to the organization's information assets. Risk assessments must be conducted at least annually and following material changes."
+  },
+  {
+    "id": "1-5",
+    "name": "Cybersecurity Compliance Management",
+    "domain": "Cybersecurity Governance",
+    "description": "The organization shall identify and comply with applicable laws, regulations, and contractual obligations related to cybersecurity including NCA directives, PDPL, and sector-specific requirements. Compliance status must be tracked and reported to management."
+  },
+  {
+    "id": "1-6",
+    "name": "Cybersecurity in Projects",
+    "domain": "Cybersecurity Governance",
+    "description": "Cybersecurity requirements shall be integrated into all project lifecycles, including new systems, infrastructure changes, and digital transformation initiatives. A cybersecurity review must be conducted before any new system is commissioned."
+  },
+  {
+    "id": "1-7",
+    "name": "Cybersecurity Awareness and Training",
+    "domain": "Cybersecurity Governance",
+    "description": "All employees shall receive role-appropriate cybersecurity awareness training upon hiring and at least annually thereafter. Specialized technical training must be provided to staff with cybersecurity responsibilities."
+  },
+  {
+    "id": "1-8",
+    "name": "Cybersecurity Periodic Review and Audit",
+    "domain": "Cybersecurity Governance",
+    "description": "Independent cybersecurity audits and reviews shall be conducted at least annually to assess compliance with policies, standards, and regulatory requirements. Audit findings must be tracked to remediation."
+  },
+  {
+    "id": "2-1-1",
+    "name": "IT Asset Inventory",
+    "domain": "Cybersecurity Defense — Asset Management",
+    "description": "An accurate and up-to-date inventory of all IT assets (hardware, software, data) shall be maintained, including asset owner, classification, and location. The inventory must be reviewed at least quarterly."
+  },
+  {
+    "id": "2-1-2",
+    "name": "OT Asset Management",
+    "domain": "Cybersecurity Defense — Asset Management",
+    "description": "An inventory of operational technology (OT) and industrial control systems assets shall be maintained separately from IT assets, capturing firmware versions, network interfaces, and communication protocols. OT asset changes must follow a dedicated change management process."
+  },
+  {
+    "id": "2-2-1",
+    "name": "Identity Management",
+    "domain": "Cybersecurity Defense — Identity and Access Management",
+    "description": "A formal identity lifecycle management process shall govern the creation, modification, disabling, and deletion of user accounts across all systems. Each user must have a unique identity; shared accounts are prohibited except for documented exceptions."
+  },
+  {
+    "id": "2-2-2",
+    "name": "Access Management",
+    "domain": "Cybersecurity Defense — Identity and Access Management",
+    "description": "Access to systems and information shall be granted on a least-privilege and need-to-know basis, with access rights reviewed at least every six months. Role-based access control (RBAC) must be implemented for all critical systems."
+  },
+  {
+    "id": "2-2-3",
+    "name": "Privileged Access Management",
+    "domain": "Cybersecurity Defense — Identity and Access Management",
+    "description": "Privileged accounts (administrator, root, service accounts) shall be strictly controlled, monitored, and managed through a privileged access management (PAM) solution. Privileged sessions must be recorded and logs retained for a minimum of one year."
+  },
+  {
+    "id": "2-3-1",
+    "name": "Information Classification",
+    "domain": "Cybersecurity Defense — Information Protection",
+    "description": "All information assets shall be classified according to their sensitivity level (e.g., public, internal, confidential, secret) and handled in accordance with the classification policy. Classification must be applied at the point of creation."
+  },
+  {
+    "id": "2-3-2",
+    "name": "Information Handling and Labelling",
+    "domain": "Cybersecurity Defense — Information Protection",
+    "description": "Classified information shall be labelled and handled according to its classification level, with controls covering storage, transmission, printing, and sharing. Unauthorized disclosure or transfer of confidential information is prohibited."
+  },
+  {
+    "id": "2-3-3",
+    "name": "Information Retention and Disposal",
+    "domain": "Cybersecurity Defense — Information Protection",
+    "description": "Information shall be retained for the period required by regulatory and business requirements and securely disposed of when no longer needed using approved methods (e.g., cryptographic erasure, physical destruction). Disposal must be documented."
+  },
+  {
+    "id": "2-4-1",
+    "name": "Secure Endpoint Configuration",
+    "domain": "Cybersecurity Defense — Secure Configuration",
+    "description": "All endpoint devices (workstations, laptops, mobile devices) shall be configured according to approved security baselines with unnecessary services and ports disabled. Configuration compliance must be verified before deployment and monitored continuously."
+  },
+  {
+    "id": "2-4-2",
+    "name": "Secure Server Configuration",
+    "domain": "Cybersecurity Defense — Secure Configuration",
+    "description": "Servers shall be hardened according to approved security baselines (e.g., CIS benchmarks) before deployment, with unnecessary services, ports, and protocols disabled. Configuration drift must be detected and remediated within defined timeframes."
+  },
+  {
+    "id": "2-5-1",
+    "name": "Network Segmentation",
+    "domain": "Cybersecurity Defense — Network Security",
+    "description": "Networks shall be segmented using firewalls, VLANs, and DMZ architectures to isolate critical systems, OT networks, and sensitive data from general-purpose networks. Internet-facing systems must be separated from internal systems."
+  },
+  {
+    "id": "2-5-2",
+    "name": "Remote Access Security",
+    "domain": "Cybersecurity Defense — Network Security",
+    "description": "All remote access to organizational systems shall require multi-factor authentication (MFA) and be conducted over encrypted channels (e.g., VPN with TLS 1.2 or higher). Remote access sessions must be logged and monitored."
+  },
+  {
+    "id": "2-5-3",
+    "name": "Network Traffic Monitoring",
+    "domain": "Cybersecurity Defense — Network Security",
+    "description": "Network traffic shall be monitored for anomalous activity, unauthorized connections, and indicators of compromise using network detection and response (NDR) or equivalent tools. Alerts must be reviewed by the security operations function."
+  },
+  {
+    "id": "2-6-1",
+    "name": "Cybersecurity Event Log Management",
+    "domain": "Cybersecurity Defense — Event Logs",
+    "description": "Security-relevant event logs shall be collected from all critical systems, centralized in a SIEM or log management platform, and retained for a minimum of 12 months with at least 3 months online. Log integrity must be protected from tampering."
+  },
+  {
+    "id": "2-6-2",
+    "name": "Security Monitoring and Detection",
+    "domain": "Cybersecurity Defense — Event Logs",
+    "description": "A 24x7 security monitoring capability shall be established to detect, correlate, and alert on cybersecurity events in near real-time. Detection rules must cover the MITRE ATT&CK techniques applicable to the organization's threat profile."
+  },
+  {
+    "id": "2-7-1",
+    "name": "Vulnerability Assessment",
+    "domain": "Cybersecurity Defense — Vulnerability Management",
+    "description": "Regular vulnerability assessments shall be conducted on all systems using approved scanning tools, with critical and high vulnerabilities remediated within 15 days and medium vulnerabilities within 30 days. Scan results must be tracked to closure."
+  },
+  {
+    "id": "2-7-2",
+    "name": "Patch Management",
+    "domain": "Cybersecurity Defense — Vulnerability Management",
+    "description": "A formal patch management process shall ensure that security patches are evaluated, tested, and applied within defined timeframes based on severity. Emergency patches for critical vulnerabilities must be applied within 72 hours."
+  },
+  {
+    "id": "2-8-1",
+    "name": "Penetration Testing",
+    "domain": "Cybersecurity Defense — Penetration Testing",
+    "description": "Penetration testing shall be conducted at least annually on critical systems and applications by qualified internal teams or licensed third-party providers. Findings must be remediated and retested within agreed timelines."
+  },
+  {
+    "id": "2-9-1",
+    "name": "Cryptographic Controls",
+    "domain": "Cybersecurity Defense — Cryptography",
+    "description": "Encryption shall be applied to sensitive data at rest and in transit using approved algorithms and key lengths (e.g., AES-256 for data at rest, TLS 1.2+ for data in transit). Cryptographic key management procedures must be documented and enforced."
+  },
+  {
+    "id": "2-10-1",
+    "name": "Malware Protection",
+    "domain": "Cybersecurity Defense — Malware Protection",
+    "description": "Anti-malware and endpoint detection and response (EDR) solutions shall be deployed on all endpoints and servers with signatures updated at least daily. Malware detections must be automatically quarantined and reported to the security team."
+  },
+  {
+    "id": "2-11-1",
+    "name": "Physical Access Control",
+    "domain": "Cybersecurity Defense — Physical and Environmental Security",
+    "description": "Physical access to data centers, server rooms, and areas housing critical systems shall be restricted to authorized personnel using multi-factor physical controls (e.g., badge + PIN or biometric). Access logs must be maintained and reviewed."
+  },
+  {
+    "id": "2-11-2",
+    "name": "Environmental Controls",
+    "domain": "Cybersecurity Defense — Physical and Environmental Security",
+    "description": "Data centers and server rooms shall be protected against environmental threats including fire, flood, temperature extremes, and power failure using detection systems and redundant infrastructure (UPS, generators, CRAC units)."
+  },
+  {
+    "id": "2-12-1",
+    "name": "Secure Application Development",
+    "domain": "Cybersecurity Defense — Application Security",
+    "description": "Secure development practices (SSDLC) shall be followed for all internally developed applications, including security requirements definition, threat modeling, secure coding guidelines, and security testing before release."
+  },
+  {
+    "id": "2-12-2",
+    "name": "Application Security Testing",
+    "domain": "Cybersecurity Defense — Application Security",
+    "description": "Web applications and APIs exposed to the internet or handling sensitive data shall undergo static application security testing (SAST) and dynamic application security testing (DAST) before deployment and after significant changes."
+  },
+  {
+    "id": "2-13-1",
+    "name": "Email Security",
+    "domain": "Cybersecurity Defense — Email and Web Security",
+    "description": "Email security controls shall include anti-spam, anti-phishing, anti-malware scanning, DMARC/DKIM/SPF enforcement, and protection against business email compromise (BEC). Suspicious emails must be reported through a defined process."
+  },
+  {
+    "id": "2-13-2",
+    "name": "Web Browsing Security",
+    "domain": "Cybersecurity Defense — Email and Web Security",
+    "description": "Web browsing from organizational devices shall be filtered using a web proxy or secure web gateway to block access to malicious, inappropriate, and unauthorized categories. SSL/TLS inspection must be applied to encrypted web traffic."
+  },
+  {
+    "id": "2-14-1",
+    "name": "Data Loss Prevention",
+    "domain": "Cybersecurity Defense — Data Protection",
+    "description": "Data loss prevention (DLP) controls shall be implemented to detect and prevent unauthorized exfiltration of sensitive data via email, web, removable media, and cloud storage. DLP policies must be tuned to minimize false positives while maintaining coverage."
+  },
+  {
+    "id": "3-1",
+    "name": "Cybersecurity Incident Management",
+    "domain": "Cybersecurity Resilience",
+    "description": "A documented cybersecurity incident management process shall define roles, responsibilities, escalation paths, and response procedures for detecting, containing, eradicating, and recovering from cybersecurity incidents. Major incidents must be reported to NCA within the mandated timeframe."
+  },
+  {
+    "id": "3-2",
+    "name": "Business Continuity Management",
+    "domain": "Cybersecurity Resilience",
+    "description": "Business continuity plans (BCP) shall address cybersecurity scenarios including ransomware, system outages, and data breaches, with defined recovery time objectives (RTO) and recovery point objectives (RPO). BCP must be tested at least annually."
+  },
+  {
+    "id": "3-3",
+    "name": "Disaster Recovery",
+    "domain": "Cybersecurity Resilience",
+    "description": "Disaster recovery plans (DRP) shall ensure that critical systems and data can be restored within defined RTO/RPO targets following a major cybersecurity incident or infrastructure failure. Recovery capabilities must be validated through regular drills."
+  },
+  {
+    "id": "4-1",
+    "name": "Third-Party Cybersecurity Risk Management",
+    "domain": "Third-Party and Cloud Computing Cybersecurity",
+    "description": "Cybersecurity risks introduced by third-party vendors, suppliers, and service providers shall be assessed before engagement and monitored throughout the relationship. Third parties with access to sensitive systems or data must meet minimum cybersecurity standards."
+  },
+  {
+    "id": "4-2",
+    "name": "Cloud Computing Security",
+    "domain": "Third-Party and Cloud Computing Cybersecurity",
+    "description": "Cloud services shall be assessed for compliance with NCA cloud cybersecurity controls before adoption, with shared responsibility boundaries clearly defined. Data residency, sovereignty, and encryption requirements must be contractually enforced."
+  },
+  {
+    "id": "4-3",
+    "name": "Managed Security Services",
+    "domain": "Third-Party and Cloud Computing Cybersecurity",
+    "description": "Managed security service providers (MSSPs) shall be subject to contractual cybersecurity obligations including service levels for detection and response, data handling, and audit rights. MSSP access to systems must be logged and monitored."
+  },
+  {
+    "id": "5-1",
+    "name": "ICS Asset Management and Inventory",
+    "domain": "Industrial Control Systems Cybersecurity",
+    "description": "An inventory of all industrial control system (ICS) and SCADA assets shall be maintained, including firmware versions, communication protocols, and network connectivity. Changes to ICS assets must follow a dedicated OT change management process."
+  },
+  {
+    "id": "5-2",
+    "name": "ICS Security Architecture",
+    "domain": "Industrial Control Systems Cybersecurity",
+    "description": "ICS/OT networks shall be isolated from IT and corporate networks using air gaps, industrial firewalls, or data diodes, with strict controls on any cross-network communication. The Purdue Model or equivalent ICS segmentation architecture must be documented."
+  },
+  {
+    "id": "5-3",
+    "name": "ICS Security Monitoring",
+    "domain": "Industrial Control Systems Cybersecurity",
+    "description": "ICS/OT environments shall be monitored for cybersecurity threats using passive monitoring tools designed for OT protocols (e.g., Modbus, DNP3, IEC 61850) without disrupting operational processes. Anomalies must trigger alerts to both cybersecurity and operations teams."
+  }
+]

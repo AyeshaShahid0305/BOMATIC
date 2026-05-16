@@ -1,0 +1,206 @@
+[
+  {
+    "id": "1.1",
+    "name": "Cyber Security Strategy",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "The organization shall develop and maintain a cyber security strategy that aligns with business objectives, regulatory requirements, and the national cybersecurity framework. The strategy must be approved by the board or senior leadership and reviewed at least annually."
+  },
+  {
+    "id": "1.2",
+    "name": "Cyber Security Governance Framework",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "A cyber security governance framework shall be established defining the structure, roles, responsibilities, and accountability for cyber security decisions at board, executive, and operational levels. A dedicated Cyber Security function must be established and adequately resourced."
+  },
+  {
+    "id": "1.3",
+    "name": "Cyber Security Policies and Procedures",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "Comprehensive cyber security policies and procedures shall be documented, approved by senior management, and communicated to all relevant staff. Policies must be reviewed at least annually and updated to reflect changes in the threat landscape and regulatory requirements."
+  },
+  {
+    "id": "1.4",
+    "name": "Cyber Security Risk Appetite",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "The board shall define and document the organization's cyber security risk appetite, setting acceptable thresholds for cyber risk exposure. Risk appetite statements must be operationalized into measurable risk tolerance levels used in risk management decisions."
+  },
+  {
+    "id": "1.5",
+    "name": "Cyber Security Performance Management",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "Key performance indicators (KPIs) and key risk indicators (KRIs) for cyber security shall be defined, measured, and reported to senior management and the board on a regular basis. Performance reporting must include trend analysis and benchmark comparisons."
+  },
+  {
+    "id": "1.6",
+    "name": "Cyber Security Awareness and Training",
+    "domain": "Cyber Security Leadership and Governance",
+    "description": "A cyber security awareness program shall be established for all employees, contractors, and relevant third parties covering phishing, social engineering, password hygiene, and incident reporting. Role-based training must be provided to staff with elevated cyber security responsibilities."
+  },
+  {
+    "id": "2.1",
+    "name": "Cyber Security Risk Assessment",
+    "domain": "Cyber Security Risk Management and Compliance",
+    "description": "Formal cyber security risk assessments shall be conducted at least annually and triggered by significant changes to the business, technology, or threat environment. Risk assessments must identify, analyze, and evaluate risks to information assets using a documented methodology."
+  },
+  {
+    "id": "2.2",
+    "name": "Cyber Security Risk Treatment",
+    "domain": "Cyber Security Risk Management and Compliance",
+    "description": "Identified cyber security risks shall be treated through a combination of risk acceptance, avoidance, mitigation, or transfer, with treatment plans documented and tracked. Residual risks must be formally accepted by an appropriate risk owner."
+  },
+  {
+    "id": "2.3",
+    "name": "Cyber Security Compliance Management",
+    "domain": "Cyber Security Risk Management and Compliance",
+    "description": "The organization shall identify and monitor compliance with applicable SAMA cyber security regulations, directives, and circulars. Compliance gaps must be documented, remediation planned, and status reported to senior management."
+  },
+  {
+    "id": "2.4",
+    "name": "Cyber Security Audit",
+    "domain": "Cyber Security Risk Management and Compliance",
+    "description": "Independent cyber security audits shall be conducted at least annually by qualified internal or external auditors to assess compliance with SAMA CSF requirements. Audit findings must be tracked to remediation with clear ownership and target dates."
+  },
+  {
+    "id": "2.5",
+    "name": "Cyber Security in Change Management",
+    "domain": "Cyber Security Risk Management and Compliance",
+    "description": "Cyber security requirements shall be integrated into the organization's change management process, with all significant changes assessed for cyber security impact before implementation. Emergency changes must undergo expedited security review before or immediately after implementation."
+  },
+  {
+    "id": "3.1",
+    "name": "Asset Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "An accurate inventory of all information assets (hardware, software, data, and cloud services) shall be maintained with classification levels, owners, and locations recorded. The asset inventory must be reconciled at least quarterly and updated in real time for critical assets."
+  },
+  {
+    "id": "3.2",
+    "name": "Identity and Access Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Access to systems and data shall be granted on a least-privilege basis with unique user identities, strong authentication, and regular access reviews. Privileged access must be managed through a dedicated PAM solution with session recording for administrative accounts."
+  },
+  {
+    "id": "3.3",
+    "name": "Data and Information Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Sensitive data shall be classified, labelled, and protected throughout its lifecycle using encryption, access controls, and data loss prevention (DLP) tools. Customer and financial data must be encrypted at rest and in transit using approved algorithms."
+  },
+  {
+    "id": "3.4",
+    "name": "Infrastructure Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "IT infrastructure including servers, storage, and network devices shall be hardened according to approved security baselines with unnecessary services and ports disabled. Infrastructure configurations must be validated against baselines continuously and deviations remediated."
+  },
+  {
+    "id": "3.5",
+    "name": "Application Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Cyber security requirements shall be integrated into the application development lifecycle (SDLC) including threat modeling, secure coding standards, and security testing. Applications must undergo security testing (SAST, DAST, penetration testing) before production release."
+  },
+  {
+    "id": "3.6",
+    "name": "Change Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "All changes to production systems, applications, and infrastructure must undergo security review and approval before implementation. Change records must document security impact assessment, rollback procedures, and post-implementation verification."
+  },
+  {
+    "id": "3.7",
+    "name": "Vulnerability and Patch Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "A formal vulnerability management program shall continuously identify, prioritize, and remediate security vulnerabilities across all systems, with critical vulnerabilities patched within 15 days. Vulnerability scan results and patch status must be reported to management monthly."
+  },
+  {
+    "id": "3.8",
+    "name": "Cyber Security Event Log Management",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Security event logs from all critical systems shall be centralized in a SIEM platform, retained for a minimum of 12 months, and reviewed daily for indicators of compromise. Log integrity must be protected and logs must be available for forensic investigations."
+  },
+  {
+    "id": "3.9",
+    "name": "Malware Protection",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Anti-malware solutions with real-time protection and daily signature updates shall be deployed on all endpoints, servers, and email gateways. Malware incidents must be automatically quarantined, logged, and reported to the cyber security team within one hour of detection."
+  },
+  {
+    "id": "3.10",
+    "name": "Network Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Network security controls shall include perimeter firewalls, intrusion prevention systems (IPS), network segmentation, and encrypted communication channels for all data in transit. Internet-facing services must be protected by web application firewalls (WAF) and DDoS mitigation."
+  },
+  {
+    "id": "3.11",
+    "name": "Mobile Device Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Mobile devices used to access organizational systems or data shall be enrolled in a mobile device management (MDM) solution enforcing encryption, remote wipe, screen lock, and approved application policies. Personal devices (BYOD) require containerization of organizational data."
+  },
+  {
+    "id": "3.12",
+    "name": "Email Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Email platforms shall be protected with anti-phishing, anti-spam, anti-malware, and email authentication controls (SPF, DKIM, DMARC). Suspicious email handling procedures and reporting mechanisms must be communicated to all employees."
+  },
+  {
+    "id": "3.13",
+    "name": "Remote Access Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Remote access to organizational systems shall require multi-factor authentication and encrypted VPN connections with split-tunneling disabled for privileged access. Remote sessions must be logged, monitored, and subject to automatic timeout after inactivity."
+  },
+  {
+    "id": "3.14",
+    "name": "Physical and Environmental Security",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Physical access to data centers, server rooms, and sensitive areas shall be restricted to authorized personnel with multi-factor physical access controls and CCTV monitoring. Environmental controls (fire suppression, cooling, UPS, generators) must protect against service disruption."
+  },
+  {
+    "id": "3.15",
+    "name": "Cryptography",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Encryption shall be applied to sensitive data at rest and in transit using approved algorithms (AES-256, TLS 1.2+, RSA-2048+) with documented key management procedures. Use of deprecated or weak cryptographic algorithms is prohibited."
+  },
+  {
+    "id": "3.16",
+    "name": "Security Operations Center",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "A security operations center (SOC) capability shall be established to provide 24x7 monitoring, detection, and initial response to cyber security incidents. The SOC must maintain defined mean-time-to-detect (MTTD) and mean-time-to-respond (MTTR) targets."
+  },
+  {
+    "id": "3.17",
+    "name": "Penetration Testing",
+    "domain": "Cyber Security Operations and Technology",
+    "description": "Penetration testing shall be conducted at least annually on critical systems and externally facing applications by qualified testers. Findings must be risk-rated, remediated within defined timeframes, and verified through retesting."
+  },
+  {
+    "id": "4.1",
+    "name": "Third-Party Cyber Security Due Diligence",
+    "domain": "Third-Party Cyber Security",
+    "description": "Cyber security due diligence shall be conducted on all third parties before engagement, with the depth of assessment proportional to the level of access to systems, data, and operations. High-risk third parties must demonstrate compliance with SAMA CSF or equivalent standards."
+  },
+  {
+    "id": "4.2",
+    "name": "Third-Party Contractual Security Requirements",
+    "domain": "Third-Party Cyber Security",
+    "description": "Contracts with third parties that access organizational systems or handle sensitive data must include cyber security obligations, incident notification requirements, audit rights, and data protection clauses. Service level agreements must define security-related performance metrics."
+  },
+  {
+    "id": "4.3",
+    "name": "Third-Party Ongoing Monitoring",
+    "domain": "Third-Party Cyber Security",
+    "description": "Cyber security performance of critical third parties shall be monitored continuously through periodic assessments, security questionnaires, and review of audit reports. Access rights of third parties must be reviewed at least annually and revoked upon contract termination."
+  },
+  {
+    "id": "5.1",
+    "name": "Cyber Security Incident Management",
+    "domain": "Cyber Security Resilience",
+    "description": "A documented incident response plan shall define procedures for detecting, classifying, containing, eradicating, and recovering from cyber security incidents, with defined roles and communication channels. Major incidents must be reported to SAMA within the mandated timeframe."
+  },
+  {
+    "id": "5.2",
+    "name": "Business Continuity and Disaster Recovery",
+    "domain": "Cyber Security Resilience",
+    "description": "Business continuity and disaster recovery plans shall address cyber security scenarios with defined recovery time objectives (RTO) and recovery point objectives (RPO) for critical systems. Plans must be tested at least annually through table-top exercises and/or live drills."
+  },
+  {
+    "id": "5.3",
+    "name": "Data Backup and Recovery",
+    "domain": "Cyber Security Resilience",
+    "description": "Critical data shall be backed up according to defined schedules with backups stored securely offline or in isolated environments to protect against ransomware. Backup restoration must be tested at least quarterly to verify recoverability within RTO/RPO targets."
+  }
+]

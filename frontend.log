@@ -9,3 +9,11 @@
  ✓ Ready in 3.3s
  ○ Compiling / ...
  ✓ Compiled / in 2.3s (490 modules)
+ ✓ Compiled in 473ms (239 modules)
+ GET / 200 in 2819ms
+ ✓ Compiled /favicon.ico in 202ms (283 modules)
+ GET /favicon.ico 200 in 308ms
+ ✓ Compiled /e1/upload in 296ms (522 modules)
+ GET /e1/upload 200 in 460ms
+(node:14824) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

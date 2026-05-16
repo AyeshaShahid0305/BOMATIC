@@ -72,6 +72,13 @@ async def upload_rfp_package(
         original_filename = upload.filename or f"file_{uuid.uuid4().hex[:6]}"
         safe_filename = os.path.basename(original_filename)  # strip any path traversal
         file_path = os.path.join(package_dir, safe_filename)
+        if os.path.exists(file_path):
+            base, ext = os.path.splitext(safe_filename)
+            counter = 1
+            while os.path.exists(file_path):
+                safe_filename = f"{base}_{counter}{ext}"
+                file_path = os.path.join(package_dir, safe_filename)
+                counter += 1
 
         with open(file_path, "wb") as f:
             shutil.copyfileobj(upload.file, f)

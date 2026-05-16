@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -24,6 +25,11 @@ from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
 
 _DATA_DIR = Path(__file__).parent.parent / "data" / "frameworks"
+
+
+class MatrixRowPatch(BaseModel):
+    status: str | None = None
+    notes: str | None = None
 
 router = APIRouter(prefix="/e1", tags=["e1"])
 
@@ -390,3 +396,37 @@ def download_matrix(opportunity_id: str, db: Session = Depends(get_db)):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename=xlsx_path.name,
     )
+
+
+@router.patch("/{opportunity_id}/matrix/{req_id}")
+def patch_matrix_row(
+    opportunity_id: str,
+    req_id: str,
+    body: MatrixRowPatch,
+    db: Session = Depends(get_db),
+):
+    """Partially update status and/or notes for all matrix rows matching req_id."""
+    opportunity, pipeline = _get_opportunity_and_pipeline(opportunity_id, db)
+
+    if pipeline.current_step < 11:
+        raise HTTPException(
+            status_code=404,
+            detail="Compliance matrix not yet generated. Complete Checkpoint 1 first.",
+        )
+
+    matrix_rows: list[dict] = pipeline.step_outputs.get("10", [])
+
+    matching = [r for r in matrix_rows if r.get("req_id") == req_id]
+    if not matching:
+        raise HTTPException(status_code=404, detail=f"No matrix row found with req_id '{req_id}'.")
+
+    update = body.model_dump(exclude_none=True)
+    for row in matrix_rows:
+        if row.get("req_id") == req_id:
+            row.update(update)
+
+    # Assign a new dict so SQLAlchemy detects the change on the JSONB column
+    pipeline.step_outputs = {**pipeline.step_outputs, "10": matrix_rows}
+    db.commit()
+
+    return matching[0]

@@ -9,7 +9,8 @@ _CISCO_SKU_RE = re.compile(r"^[A-Z][A-Z0-9]{1,}-[A-Z0-9]")
 
 
 def parse(file_path: Path, detection: BoQDetectionResult) -> list[BoQLineItem]:
-    with openpyxl.load_workbook(file_path, read_only=True, data_only=True) as wb:
+    wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
+    try:
         ws = wb[detection.sheet_name]
 
         rows = ws.iter_rows(values_only=True)
@@ -44,6 +45,8 @@ def parse(file_path: Path, detection: BoQDetectionResult) -> list[BoQLineItem]:
                 total_price_usd=float(total_price) if total_price is not None else 0.0,
                 line_type=line_type,
             ))
+    finally:
+        wb.close()
 
     return items
 

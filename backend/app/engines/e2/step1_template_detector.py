@@ -12,14 +12,15 @@ UNKNOWN = "UNKNOWN"
 
 
 def detect_template(file_path: Path) -> BoQDetectionResult:
-    with openpyxl.load_workbook(file_path, read_only=True, data_only=True) as wb:
+    wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
+    try:
         sheet_names = wb.sheetnames
 
         # 1. Sheet name match
         for name in sheet_names:
             if name.lower() == "main boq":
                 ws = wb[name]
-                header_row = _get_row_values(ws, 1)
+                _get_row_values(ws, 1)
                 return BoQDetectionResult(
                     format_type=FORMAT_1_CCW,
                     confidence=0.9,
@@ -63,6 +64,8 @@ def detect_template(file_path: Path) -> BoQDetectionResult:
             sheet_name=sheet_names[0] if sheet_names else "",
             header_row_index=0,
         )
+    finally:
+        wb.close()
 
 
 def _get_row_values(ws, row_index: int) -> list[str]:

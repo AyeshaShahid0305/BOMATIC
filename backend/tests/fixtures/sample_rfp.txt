@@ -1,0 +1,267 @@
+REQUEST FOR PROPOSAL
+Network Infrastructure Upgrade — Riyadh HQ
+Reference: RFP-2024-IT-0042
+Issue Date: 1 March 2024
+Closing Date: 31 March 2024
+
+Issued by:
+Saudi National Enterprises Company (SNEC)
+Information Technology Department
+King Fahd Road, Riyadh 12271
+Kingdom of Saudi Arabia
+
+================================================================================
+SECTION 1 — EXECUTIVE SUMMARY
+================================================================================
+
+Saudi National Enterprises Company (SNEC) invites qualified Systems Integrators
+to submit technical and commercial proposals for the complete overhaul of the
+network infrastructure at our Riyadh Headquarters campus. The current network
+was deployed in 2015 and can no longer support the organisation's growth
+trajectory, cloud adoption strategy, or mandatory compliance obligations under
+the National Cybersecurity Authority's Essential Cybersecurity Controls (NCA ECC
+version 2.0).
+
+The scope covers core switching and routing, perimeter security, wireless access,
+and unified network management. The selected vendor must demonstrate prior
+experience delivering comparable projects in the Kingdom of Saudi Arabia and hold
+a valid Cisco Gold or Premier Certification at the time of contract award.
+
+This RFP is structured in five sections. Vendors are required to respond to every
+mandatory requirement. Partial responses will be disqualified.
+
+================================================================================
+SECTION 2 — SCOPE OF WORK
+================================================================================
+
+2.1 Project Overview
+
+The Vendor shall supply, install, configure, test, and commission a complete
+network infrastructure solution for the SNEC Riyadh HQ campus. The campus
+comprises three buildings (Tower A, Tower B, and the Data Centre Annex) with
+an aggregate floor area of approximately 18,500 square metres and an expected
+user population of 1,200 staff upon full occupancy.
+
+2.2 Deliverables
+
+The Vendor shall deliver the following:
+
+(a) Perimeter Security Layer
+    Supply and install Next-Generation Firewall appliances at the campus
+    perimeter and at the boundary of the Data Centre Annex. All firewalls
+    must support IPS, application visibility, and URL filtering as baseline
+    licensed features.
+
+(b) Core and Distribution Switching
+    Supply and install modular or fixed-configuration Layer 3 switches
+    to form the core and distribution tiers. All switches must support
+    IEEE 802.3bt PoE++ on access-layer ports and must provide 10G or higher
+    uplink capacity between tiers.
+
+(c) WAN and Branch Routing
+    Supply and install integrated services routers at the campus WAN edge
+    to terminate MPLS and Internet circuits. Routers must support SD-WAN
+    capability via software licence and must include dual WAN interfaces
+    as standard.
+
+(d) Wireless Infrastructure
+    Supply and install enterprise-class Wi-Fi 6 (802.11ax) access points
+    throughout all buildings. The wireless solution must support centralised
+    management, rogue AP detection, and seamless roaming across all floors.
+
+(e) Network Management Platform
+    Supply a perpetual or subscription licence for a unified network
+    management platform capable of managing all devices in scope. The
+    platform must provide topology discovery, configuration compliance
+    checking, and integration with the client's existing SIEM.
+
+2.3 Out of Scope
+
+The following items are explicitly excluded from this RFP:
+- Structured cabling and passive infrastructure
+- UPS and power distribution
+- Rack and cabinet procurement
+- End-user devices (PCs, laptops, IP phones)
+
+================================================================================
+SECTION 3 — TECHNICAL REQUIREMENTS
+================================================================================
+
+3.1 Mandatory Requirements
+
+The following requirements are mandatory. Non-compliance with any mandatory
+requirement will result in the proposal being deemed non-responsive.
+
+REQ-001 [MANDATORY]
+The Vendor shall supply a minimum of ten (10) Cisco ASA 5516-X firewalls
+with FirePOWER Services. Each unit must include a valid Threat Defence licence
+covering IPS, AMP, and URL Filtering for a minimum period of three (3) years.
+All firewalls must be configured in active/standby HA pairs.
+
+REQ-002 [MANDATORY]
+The Vendor shall supply a minimum of twenty (20) Cisco Catalyst 9300 Series
+48-port PoE+ switches. Each switch must be configured with at least two (2)
+10G SFP+ uplink modules. Stacking capability must be enabled on all units.
+The switches must support IEEE 802.1X port-based authentication integrated
+with the client's existing Microsoft Active Directory environment.
+
+REQ-003 [MANDATORY]
+The Vendor shall supply a minimum of five (5) Cisco 4331 Integrated Services
+Routers. Each router must include a valid DNA Advantage licence and must support
+IPsec VPN termination for a minimum of 500 concurrent tunnels. DMVPN Phase 3
+support is required.
+
+REQ-004 [MANDATORY]
+The Vendor shall supply a minimum of fifty (50) Cisco Aironet 2800 Series
+Wi-Fi 6 Access Points. APs must be zero-touch provisioned via Cisco DNA Centre
+or Cisco Meraki Dashboard. The wireless solution must achieve a minimum RSSI of
+-67 dBm at 95% of all occupied floor areas as validated by a pre-installation
+RF survey report.
+
+REQ-005 [MANDATORY]
+The Vendor shall supply Cisco DNA Centre (physical or virtual appliance) as the
+unified network management platform. The platform must be licensed to manage
+all devices supplied under this contract for a minimum period of three (3) years.
+Integration with Splunk SIEM via syslog and REST API is required.
+
+REQ-006 [MANDATORY]
+All supplied equipment must be new, unused, and sourced from Cisco-authorised
+distribution channels. Grey market or refurbished equipment will result in
+immediate disqualification. The Vendor must provide Cisco Smart Net Total Care
+(SNTC) entitlement reports at the time of delivery.
+
+REQ-007 [MANDATORY]
+The Vendor must hold a valid Cisco Gold Certification or higher, issued to the
+legal entity submitting this proposal, at the time of bid submission and
+throughout the contract period.
+
+3.2 Optional Requirements
+
+The following requirements are desirable. Vendors are encouraged to propose
+value-added elements; however, non-compliance will not disqualify a proposal.
+
+REQ-008 [OPTIONAL]
+The Vendor should provide a Software-Defined Access (SD-Access) fabric design
+for the campus switching layer, enabling macro- and micro-segmentation without
+VLAN proliferation.
+
+REQ-009 [OPTIONAL]
+The Vendor should include Cisco ThousandEyes endpoint monitoring licences for
+up to 200 users to provide end-to-end visibility for SaaS and cloud-hosted
+applications.
+
+REQ-010 [OPTIONAL]
+The Vendor should propose a managed services wrapper for NOC monitoring of all
+devices in scope, with defined SLAs for incident response.
+
+3.3 Conditional Requirements
+
+REQ-011 [CONDITIONAL — applies if Vendor proposes SD-WAN]
+If the Vendor proposes a Cisco SD-WAN (Viptela) solution at the WAN edge,
+the solution must integrate with Cisco Umbrella for cloud-delivered DNS security
+and must support application-aware routing policies for Microsoft 365 traffic.
+
+================================================================================
+SECTION 4 — COMPLIANCE REQUIREMENTS
+================================================================================
+
+4.1 Regulatory Compliance
+
+All solutions proposed under this RFP must comply with the following:
+
+(a) NCA Essential Cybersecurity Controls (ECC) Version 2.0
+    The firewall, switching, and network management components must satisfy
+    controls under domains ECC-1 (Cybersecurity Governance) and ECC-2
+    (Cybersecurity Defence). The Vendor must submit a compliance mapping
+    document cross-referencing each proposed product against the relevant
+    ECC control identifiers.
+
+(b) ISO/IEC 27001:2022
+    The Vendor's project delivery methodology must be consistent with the
+    information security management principles defined in ISO/IEC 27001:2022.
+    Evidence of the Vendor's own ISO 27001 certification is mandatory.
+
+(c) SDAIA Personal Data Protection Law (PDPL)
+    Where the network management platform processes or stores personal data
+    of Saudi nationals, the Vendor must confirm compliance with the SDAIA PDPL.
+    Data residency within the Kingdom of Saudi Arabia is required for all
+    management-plane data.
+
+4.2 Documentation Requirements
+
+The Vendor must submit the following compliance documents with the proposal:
+
+- High-level and detailed design documents
+- Bill of Materials (BoM) with Cisco product SKUs and list prices
+- NCA ECC-2 compliance mapping matrix
+- ISO 27001 certificate (current, in-scope for SI services)
+- Vendor's VAT registration certificate
+- Proof of Cisco Gold or higher certification
+- CVs of key project personnel (Project Manager, Lead Network Architect,
+  Security Specialist)
+
+================================================================================
+SECTION 5 — COMMERCIAL TERMS AND CONDITIONS
+================================================================================
+
+5.1 Pricing
+
+The Vendor shall submit a fully itemised commercial proposal in the provided
+Bill of Quantities (BoQ) template. Prices must be stated in United States Dollars
+(USD) exclusive of VAT. VAT at the applicable Saudi rate (15%) will be added to
+the contract value.
+
+5.2 Payment Terms
+
+Payment shall be made according to the following schedule:
+- 10% mobilisation advance upon contract signing
+- 50% upon delivery and acceptance of all hardware at site
+- 30% upon completion of installation and commissioning
+- 10% upon final acceptance and sign-off
+
+PAYMENT TERMS CLAUSE: All invoices must be settled within ninety (90) days of
+the invoice date. The client reserves the right to offset any outstanding
+penalties or deductions against amounts due to the Vendor. The Vendor expressly
+waives any right to claim interest on late payments regardless of the cause
+of delay.
+
+5.3 Liability
+
+LIABILITY CLAUSE: The Vendor accepts unlimited liability for any loss, damage,
+or expense arising directly or indirectly from the performance or non-performance
+of this contract, including but not limited to loss of revenue, loss of data,
+business interruption, and reputational damage. This liability shall not be
+subject to any cap or limitation, financial or otherwise.
+
+5.4 Performance Penalties
+
+PENALTY CLAUSE: In the event of delay in delivery or commissioning beyond the
+contractual milestone dates, the Vendor shall pay to the Client liquidated
+damages at a rate of five percent (5%) of the total contract value per week
+of delay, or part thereof. Liquidated damages shall accrue from the first day
+of delay without notice and shall not be subject to any maximum cap. The Client
+may deduct accrued liquidated damages from any amounts otherwise due to the Vendor.
+
+5.5 Warranty
+
+The Vendor must provide a minimum of three (3) years on-site warranty for all
+hardware components, with next-business-day parts replacement and 8×5 on-site
+engineer response. Optional extension to 24×7×4-hour response must be priced
+separately.
+
+5.6 Intellectual Property
+
+All design documents, configurations, and work products produced under this
+contract shall become the sole intellectual property of SNEC upon final payment.
+The Vendor retains no licence to reuse designs or configurations for other clients.
+
+5.7 Governing Law
+
+This contract shall be governed by the laws of the Kingdom of Saudi Arabia.
+Disputes shall be resolved by arbitration under the Saudi Centre for Commercial
+Arbitration (SCCA) rules, with arbitration seated in Riyadh.
+
+================================================================================
+END OF REQUEST FOR PROPOSAL
+RFP-2024-IT-0042 | SNEC IT Department | Riyadh HQ Network Upgrade
+================================================================================

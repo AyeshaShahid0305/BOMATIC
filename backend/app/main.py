@@ -10,6 +10,7 @@ from app.api.e1_router import router as e1_router
 from app.api.e2_routes import router as e2_router
 from app.api.e3_routes import router as e3_router
 from app.api.e4_routes import router as e4_router
+from app.api.e5_routes import router as e5_router
 
 BOMATIC_API_KEY = os.getenv("BOMATIC_API_KEY")
 _EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc"}
@@ -44,3 +45,4 @@ app.include_router(e1_router, prefix="/api")
 app.include_router(e2_router, prefix="/api")
 app.include_router(e3_router, prefix="/api")
 app.include_router(e4_router, prefix="/api")
+app.include_router(e5_router, prefix="/api")

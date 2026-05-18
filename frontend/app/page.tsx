@@ -83,6 +83,25 @@ export default function Home() {
               Open RFI Generator
             </a>
           </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-700 font-bold text-sm">
+                E5
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800">HLD/LLD Generator</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Generate a professional High Level Design and Low Level Design document
+              from an RFP session. Includes cover page, TOC, and AI-written design sections.
+            </p>
+            <a
+              href="/e5"
+              className="block w-full py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium text-center hover:bg-indigo-700"
+            >
+              Open HLD/LLD Generator
+            </a>
+          </div>
         </div>
 
         <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

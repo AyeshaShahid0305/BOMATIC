@@ -29,6 +29,25 @@ export default function Home() {
 
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-700 font-bold text-sm">
+                E2
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800">BoM Builder</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Upload a vendor BoQ template and match it against your RFP requirements.
+              Produces a priced Bill of Materials with gap analysis and SI discount applied.
+            </p>
+            <a
+              href="/e2"
+              className="block w-full py-2 px-4 bg-green-600 text-white rounded-lg text-sm font-medium text-center hover:bg-green-700"
+            >
+              Open BoM Builder
+            </a>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold text-sm">
                 #
               </div>

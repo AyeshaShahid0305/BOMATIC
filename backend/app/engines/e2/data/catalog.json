@@ -1,0 +1,82 @@
+[
+  {
+    "sku": "ASA5516-FPWR-K9",
+    "product_name": "Cisco ASA 5516-X with FirePOWER Services",
+    "vendor": "Cisco",
+    "category": "security",
+    "keywords": ["firewall", "asa", "firepower", "ngfw", "5516"],
+    "unit_price": 4995.00
+  },
+  {
+    "sku": "FPR1120-NGFW-K9",
+    "product_name": "Cisco Firepower 1120 NGFW Appliance",
+    "vendor": "Cisco",
+    "category": "security",
+    "keywords": ["firewall", "firepower", "ngfw", "1120", "next-generation"],
+    "unit_price": 3995.00
+  },
+  {
+    "sku": "C9300-48P-E",
+    "product_name": "Cisco Catalyst 9300 48-Port PoE+ Switch",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["switch", "catalyst", "9300", "poe", "48-port", "gigabit"],
+    "unit_price": 7200.00
+  },
+  {
+    "sku": "C9200-24P-E",
+    "product_name": "Cisco Catalyst 9200 24-Port PoE Switch",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["switch", "catalyst", "9200", "poe", "24-port", "gigabit"],
+    "unit_price": 3800.00
+  },
+  {
+    "sku": "WS-C3850-48P-E",
+    "product_name": "Cisco Catalyst 3850 48-Port PoE Switch",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["switch", "catalyst", "3850", "poe", "48-port", "stackable"],
+    "unit_price": 5500.00
+  },
+  {
+    "sku": "AIR-AP2802I-E-K9",
+    "product_name": "Cisco Aironet 2800 Series Access Point",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["access point", "ap", "wifi", "wireless", "aironet", "2800", "802.11ac"],
+    "unit_price": 895.00
+  },
+  {
+    "sku": "CW9166I-EWC-E",
+    "product_name": "Cisco Catalyst 9166 Wi-Fi 6E Access Point",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["access point", "ap", "wifi", "wireless", "wi-fi 6e", "catalyst", "9166"],
+    "unit_price": 1250.00
+  },
+  {
+    "sku": "ISR4331/K9",
+    "product_name": "Cisco ISR 4331 Integrated Services Router",
+    "vendor": "Cisco",
+    "category": "network",
+    "keywords": ["router", "isr", "4331", "wan", "branch"],
+    "unit_price": 3200.00
+  },
+  {
+    "sku": "UCSC-C220-M6S",
+    "product_name": "Cisco UCS C220 M6 Rack Server",
+    "vendor": "Cisco",
+    "category": "hardware",
+    "keywords": ["server", "ucs", "c220", "rack", "compute"],
+    "unit_price": 8500.00
+  },
+  {
+    "sku": "C9300-DNA-A-3Y",
+    "product_name": "Cisco DNA Advantage License for Catalyst 9300 (3-Year)",
+    "vendor": "Cisco",
+    "category": "license",
+    "keywords": ["dna", "license", "advantage", "catalyst", "9300", "subscription", "3-year"],
+    "unit_price": 450.00
+  }
+]

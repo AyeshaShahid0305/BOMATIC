@@ -7,6 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from app.routers import health, rfp
 from app.api.e1_router import router as e1_router
+from app.api.e2_routes import router as e2_router
 
 BOMATIC_API_KEY = os.getenv("BOMATIC_API_KEY")
 _EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc"}
@@ -38,3 +39,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(rfp.router, prefix="/api/v1")
 app.include_router(e1_router, prefix="/api")
+app.include_router(e2_router, prefix="/api")

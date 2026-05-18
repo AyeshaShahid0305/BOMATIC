@@ -30,6 +30,10 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Generated engine outputs
+backend/app/engines/e2/output/*.xlsx
+backend/app/engines/e3/output/*.docx
+
 # Logs
 backend/backend.log
 frontend/frontend.log

@@ -67,20 +67,21 @@ export default function Home() {
 
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold text-sm">
-                #
+              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 font-bold text-sm">
+                E4
               </div>
-              <h2 className="text-lg font-semibold text-gray-800">My Opportunities</h2>
+              <h2 className="text-lg font-semibold text-gray-800">RFI Generator</h2>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              View all RFP packages and their pipeline status across the 6 pre-sales gates.
+              Generate a targeted RFI questionnaire from an RFP session, or produce a
+              standard SI discovery template when no session is available.
             </p>
-            <button
-              disabled
-              className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg text-sm font-medium opacity-40 cursor-not-allowed"
+            <a
+              href="/e4"
+              className="block w-full py-2 px-4 bg-orange-600 text-white rounded-lg text-sm font-medium text-center hover:bg-orange-700"
             >
-              View Opportunities — coming in Phase 1
-            </button>
+              Open RFI Generator
+            </a>
           </div>
         </div>
 

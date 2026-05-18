@@ -17,3 +17,10 @@
  GET /e1/upload 200 in 460ms
 (node:14824) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled in 405ms (246 modules)
+ ✓ Compiled in 139ms (246 modules)
+ ✓ Compiled in 563ms (501 modules)
+ ✓ Compiled in 193ms (246 modules)
+ ✓ Compiled in 303ms (246 modules)
+ ✓ Compiled in 521ms (246 modules)
+ ✓ Compiled in 505ms (246 modules)

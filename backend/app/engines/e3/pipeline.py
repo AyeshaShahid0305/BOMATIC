@@ -1,7 +1,11 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
+from app.engines.e2.models import PricingSummary
 from .step1_template_selector import select_template
 from .step2_e1_data_reader import read_e1_data
+from .step3_e2_data_reader import read_e2_data
 from .step4_narrative_generator import generate_narratives
 from .step5_assembler import assemble_proposal
 from .step6_docx_writer import write_proposal
@@ -12,13 +16,17 @@ def run_e3_pipeline(
     session_id: str,
     db: Session,
     gbb_tier: str = "better",
+    pricing_summary: Optional[PricingSummary] = None,
 ) -> dict:
     sections = select_template("rfp")
     e1_data = read_e1_data(session_id, db)
-    gbb_result = calculate_gbb(0, gbb_tier)
 
-    narratives = generate_narratives(e1_data, {}, sections, gbb_tier)
-    assembled = assemble_proposal(sections, narratives, e1_data, {}, gbb_result)
+    base_price = pricing_summary.total if pricing_summary else 0.0
+    gbb_result = calculate_gbb(base_price, gbb_tier)
+
+    e2_data = read_e2_data(pricing_summary) if pricing_summary else {}
+    narratives = generate_narratives(e1_data, e2_data, sections, gbb_tier)
+    assembled = assemble_proposal(sections, narratives, e1_data, e2_data, gbb_result)
     output_path = write_proposal(assembled, e1_data["project_name"], gbb_tier)
 
     return {
@@ -28,4 +36,5 @@ def run_e3_pipeline(
         "ai_generated_count": sum(1 for s in assembled if s["ai_generated"]),
         "gbb_tier": gbb_tier,
         "gbb_multiplier": gbb_result.multiplier,
+        "total_price": gbb_result.adjusted_price,
     }

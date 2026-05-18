@@ -38,3 +38,5 @@ backend/app/engines/e3/output/*.docx
 backend/backend.log
 frontend/frontend.log
 *.log
+backend/app/engines/e4/output/*.xlsx
+backend/app/engines/e5/output/*.docx

@@ -1,13 +1,12 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import E1Checkpoint from "../../../src/components/E1Checkpoint";
 
 export default function E1UploadPage() {
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [projectName, setProjectName] = useState("");
+  const [loadingStage, setLoadingStage] = useState(null); // null | "uploading" | "analyzing"
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const router = useRouter();
@@ -24,31 +23,47 @@ export default function E1UploadPage() {
     setFiles(prev => prev.filter(f => f.name !== name));
   }
 
-  async function handleAnalyze() {
-    setLoading(true);
+  async function handleUpload() {
     setError(null);
-    setResult(null);
 
     const form = new FormData();
     files.forEach(f => form.append("files", f));
+    if (projectName.trim()) form.append("project_name", projectName.trim());
+
+    let opportunityId;
 
     try {
-      const res = await fetch("/api/e1/analyze", { method: "POST", body: form });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `Server error ${res.status}`);
+      setLoadingStage("uploading");
+      const uploadRes = await fetch("/api/v1/rfp/packages", { method: "POST", body: form });
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text();
+        throw new Error(text || `Upload failed: ${uploadRes.status}`);
       }
-      setResult(await res.json());
+      const uploadData = await uploadRes.json();
+      opportunityId = uploadData.opportunity_id;
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
+      setLoadingStage(null);
+      return;
     }
+
+    try {
+      setLoadingStage("analyzing");
+      const runRes = await fetch(`/api/e1/${opportunityId}/run`, { method: "POST" });
+      if (!runRes.ok) {
+        const text = await runRes.text();
+        throw new Error(text || `Analysis failed: ${runRes.status}`);
+      }
+    } catch (err) {
+      setError(err.message);
+      setLoadingStage(null);
+      return;
+    }
+
+    router.push(`/e1/${opportunityId}/checkpoint1`);
   }
 
-  if (result) {
-    return <E1Checkpoint result={result} onProceed={() => router.push("/e1/checkpoint")} />;
-  }
+  const loading = loadingStage !== null;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
@@ -99,6 +114,19 @@ export default function E1UploadPage() {
         </ul>
       )}
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Project name <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={projectName}
+          onChange={e => setProjectName(e.target.value)}
+          placeholder="e.g. City Hall HVAC Upgrade"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -106,7 +134,7 @@ export default function E1UploadPage() {
       )}
 
       <button
-        onClick={handleAnalyze}
+        onClick={handleUpload}
         disabled={files.length === 0 || loading}
         className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
@@ -116,7 +144,11 @@ export default function E1UploadPage() {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3V0A12 12 0 000 12h4z" />
           </svg>
         )}
-        {loading ? "Analyzing…" : "Analyze"}
+        {loadingStage === "uploading"
+          ? "Uploading files…"
+          : loadingStage === "analyzing"
+          ? "Analyzing RFP…"
+          : "Analyze"}
       </button>
     </div>
   );

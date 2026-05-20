@@ -12,7 +12,7 @@ def run_e2_pipeline(rfp_text: str, template_path: Path) -> dict:
     rfp_items = extract_rfp_requirements(rfp_text)
 
     detection = detect_template(template_path)
-    boq_items = parse_boq(template_path, detection)  # noqa: F841 — available for future steps
+    boq_items = parse_boq(template_path, detection)
 
     matches = match_catalog(rfp_items)
     summary = analyze_gaps(matches)
@@ -27,4 +27,5 @@ def run_e2_pipeline(rfp_text: str, template_path: Path) -> dict:
         "discount_amount": summary.discount_amount,
         "total": summary.total,
         "currency": summary.currency,
+        "boq_items": boq_items,
     }

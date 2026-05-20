@@ -304,13 +304,9 @@ export default function Checkpoint1Page() {
     }
   }
 
-  async function handleRevisionSubmit(notes) {
-    setRevisionSubmitting(true);
-    // Stub: a real implementation would POST revision notes and re-trigger the pipeline
-    await new Promise(r => setTimeout(r, 600));
-    setRevisionSubmitting(false);
+  function handleRevisionSubmit() {
     setShowModal(false);
-    setToast("Revision request submitted. The pipeline will re-run with your notes.");
+    setToast("Revision re-run is not yet available. Please contact support.");
   }
 
   // Loading

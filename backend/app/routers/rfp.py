@@ -1,6 +1,7 @@
 import os
 import uuid
 import shutil
+from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
@@ -40,6 +41,14 @@ async def upload_rfp_package(
         raise HTTPException(status_code=400, detail="At least one file is required.")
     if len(files) > 100:
         raise HTTPException(status_code=400, detail="Maximum 100 files per package.")
+
+    for upload in files:
+        ext = Path(upload.filename or "").suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type '{ext}' is not allowed. Accepted types: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+            )
 
     # Use provided opportunity_id or generate one
     opp_id_str = opportunity_id or f"OPP-{uuid.uuid4().hex[:8].upper()}"

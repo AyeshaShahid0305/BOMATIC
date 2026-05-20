@@ -49,8 +49,9 @@ def link_tp_sections(matrix_rows: list[dict]) -> list[dict]:
     # Invariant: every mandatory row must have a non-empty tp_section
     for row in matrix_rows:
         if row.get("classification") == "mandatory":
-            assert row.get("tp_section"), (
-                f"Mandatory requirement {row.get('req_id')} has no tp_section assigned"
-            )
+            if not row.get("tp_section"):
+                raise ValueError(
+                    f"Mandatory requirement {row.get('req_id')} has no tp_section assigned"
+                )
 
     return matrix_rows

@@ -154,6 +154,11 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
     if not step1_results:
         raise HTTPException(status_code=400, detail="No readable files found in the package directory.")
 
+    # Write extracted text back to Document records so E2/E3/E4/E5 can read it.
+    for doc in documents:
+        if doc.filename in texts:
+            doc.text_content = texts[doc.filename]
+
     # Steps 2–4: analysis on extracted text
     classified_for_step2 = [{"filename": r["filename"], "type": r["type"]} for r in step1_results]
     missing   = detect_missing_documents(classified_for_step2, texts)
@@ -264,8 +269,10 @@ def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)):
 
     client_name = opportunity.client_name or ""
 
-    # Step 8: sector detection from client name (texts empty — already stored)
-    sector_result = detect_sector(client_name, {})
+    # Step 8: sector detection
+    documents = db.query(Document).filter(Document.opportunity_id == opportunity.id).all()
+    texts = {doc.filename: doc.text_content for doc in documents if doc.text_content}
+    sector_result = detect_sector(client_name, texts)
 
     # Step 9: framework selection
     related_standards: list[str] = []

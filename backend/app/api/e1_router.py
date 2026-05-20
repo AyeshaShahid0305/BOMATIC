@@ -1,11 +1,9 @@
 import asyncio
 import dataclasses
 import functools
-import shutil
-import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -45,60 +43,6 @@ class MatrixRowPatch(BaseModel):
     notes: str | None = None
 
 router = APIRouter(prefix="/e1", tags=["e1"])
-
-
-@router.post("/analyze")
-async def analyze_rfp(files: list[UploadFile] = File(...)):
-    if not files:
-        raise HTTPException(status_code=400, detail="At least one file is required.")
-
-    tmp_dir = Path(tempfile.mkdtemp())
-    try:
-        classified: list[dict] = []
-        texts: dict[str, str] = {}
-
-        for upload in files:
-            name = Path(upload.filename or "file").name
-            dest = tmp_dir / name
-            if upload.size is not None and upload.size > 20 * 1024 * 1024:
-                raise HTTPException(status_code=400, detail="File too large. Maximum size is 20MB.")
-            dest.write_bytes(await upload.read())
-
-            classification = classify_file(
-                filename=name,
-                folder_path="",
-                file_path=dest,
-            )
-            classified.append({"filename": name, "type": classification.type})
-
-            extracted = extract_text(dest)
-            if extracted.get("text"):
-                texts[name] = extracted["text"]
-
-        missing   = detect_missing_documents(classified, texts)
-        reqs      = extract_requirements(texts, opportunity_id="analyze")
-        flags     = detect_legal_traps(texts)
-
-        return {
-            "files": [
-                {"name": c["filename"], "type": c["type"]}
-                for c in classified
-            ],
-            "requirements": [
-                {"text": r.text, "confidence": r.confidence, "type": r.classification}
-                for r in reqs
-            ],
-            "flags": [
-                {"flag": f.flag, "severity": f.severity, "deadline": f.deadline}
-                for f in flags
-            ],
-            "missing_docs": [
-                {"name": m.referenced_doc, "severity": m.severity, "action": m.action}
-                for m in missing
-            ],
-        }
-    finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 @router.post("/{opportunity_id}/run")

@@ -109,9 +109,9 @@ export default function Home() {
           <div className="space-y-2 text-sm">
             {[
               { phase: "Phase 0", label: "Foundation — FastAPI + DB + Next.js shell", done: true },
-              { phase: "Phase 1", label: "File upload + text extraction + Step 1 classifier", done: false },
-              { phase: "Phase 2", label: "E1 Steps 2–5: requirements, legal traps, Checkpoint 1", done: false },
-              { phase: "Phase 3", label: "E1 Steps 6–12: compliance matrix, outputs, Checkpoint 2", done: false },
+              { phase: "Phase 1", label: "File upload + text extraction + Step 1 classifier", done: true },
+              { phase: "Phase 2", label: "E1 Steps 2–12: requirements, legal traps, compliance matrix, Checkpoint 1 & 2", done: true },
+              { phase: "Phase 3", label: "E2–E5: BoM Builder, Proposal Generator, RFI Generator, HLD/LLD Generator", done: true },
             ].map(({ phase, label, done }) => (
               <div key={phase} className="flex items-center gap-3">
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${done ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>

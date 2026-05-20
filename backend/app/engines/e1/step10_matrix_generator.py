@@ -52,18 +52,16 @@ def _load_controls(frameworks: list[str], data_dir: Path) -> dict[str, list[dict
 
 def match_controls(
     requirement_text: str,
-    frameworks: list[str],
-    data_dir: Path,
+    controls_by_fw: dict[str, list[dict]],
 ) -> list[dict]:
     """
     Score requirement_text against every control in the given frameworks via
     Jaccard similarity. Returns top-3 matches per framework above threshold.
     """
-    all_controls = _load_controls(frameworks, data_dir)
     req_tokens = _tokenize(requirement_text)
     matches: list[dict] = []
 
-    for fw, controls in all_controls.items():
+    for fw, controls in controls_by_fw.items():
         scored: list[tuple[float, dict]] = []
         for ctrl in controls:
             ctrl_tokens = _tokenize(ctrl["name"] + " " + ctrl["description"])
@@ -227,7 +225,7 @@ def generate_compliance_matrix(
         req_text = req["text"]
         classification = req["classification"]
 
-        matches = match_controls(req_text, frameworks, data_dir)
+        matches = match_controls(req_text, controls_by_fw)
 
         if not matches:
             matrix_rows.append({

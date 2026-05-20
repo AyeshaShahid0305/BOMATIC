@@ -1,4 +1,6 @@
+import asyncio
 import dataclasses
+import functools
 import shutil
 import tempfile
 from pathlib import Path
@@ -255,7 +257,7 @@ def _get_opportunity_and_pipeline(opportunity_id: str, db: Session):
 # ---------------------------------------------------------------------------
 
 @router.post("/{opportunity_id}/checkpoint1/approve")
-def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)):
+async def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)):
     """
     Approve Checkpoint 1: run Steps 8–11 (sector, frameworks, matrix, TP links)
     and advance pipeline to step 11 (checkpoint_2_pending).
@@ -291,12 +293,16 @@ def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)):
         related_standards.extend(req.get("related_standards", []))
     frameworks = select_frameworks(sector_result["sector"], related_standards)
 
-    # Step 10: compliance matrix generation (AI call inside)
-    matrix_result = generate_compliance_matrix(
-        requirements=requirements,
-        frameworks=frameworks,
-        api_key=settings.anthropic_api_key,
-        data_dir=_DATA_DIR,
+    # Step 10: compliance matrix generation (AI call inside — offloaded to threadpool)
+    matrix_result = await asyncio.get_running_loop().run_in_executor(
+        None,
+        functools.partial(
+            generate_compliance_matrix,
+            requirements=requirements,
+            frameworks=frameworks,
+            api_key=settings.anthropic_api_key,
+            data_dir=_DATA_DIR,
+        ),
     )
 
     # Step 11: TP section linking
@@ -329,7 +335,7 @@ def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.post("/{opportunity_id}/checkpoint2/approve")
-def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)):
+async def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)):
     """
     Approve Checkpoint 2: write the compliance matrix .xlsx and mark pipeline complete.
     """
@@ -347,12 +353,16 @@ def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)):
     stats: dict = pipeline.step_outputs.get("stats", {})
 
     output_dir = Path(settings.upload_dir) / opportunity_id
-    xlsx_path = write_compliance_matrix_xlsx(
-        matrix_rows=matrix_rows,
-        gaps=gaps,
-        stats=stats,
-        opportunity_id=opportunity_id,
-        output_dir=output_dir,
+    xlsx_path = await asyncio.get_running_loop().run_in_executor(
+        None,
+        functools.partial(
+            write_compliance_matrix_xlsx,
+            matrix_rows=matrix_rows,
+            gaps=gaps,
+            stats=stats,
+            opportunity_id=opportunity_id,
+            output_dir=output_dir,
+        ),
     )
 
     pipeline.step_outputs = {

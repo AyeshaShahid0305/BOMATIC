@@ -50,6 +50,13 @@ async def upload_rfp_package(
                 detail=f"File type '{ext}' is not allowed. Accepted types: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
             )
 
+    for upload in files:
+        if upload.size is not None and upload.size > 20 * 1024 * 1024:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{upload.filename}' exceeds the 20 MB limit.",
+            )
+
     # Use provided opportunity_id or generate one
     opp_id_str = opportunity_id or f"OPP-{uuid.uuid4().hex[:8].upper()}"
 

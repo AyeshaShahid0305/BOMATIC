@@ -3,9 +3,8 @@ import os
 
 import anthropic
 
+from app.config import CLAUDE_MODEL
 from .models import RFIQuestion
-
-CLAUDE_MODEL = "claude-sonnet-4-5"
 _MAX_TEXT_CHARS = 60_000
 
 _FALLBACK_QUESTIONS: list[dict] = [

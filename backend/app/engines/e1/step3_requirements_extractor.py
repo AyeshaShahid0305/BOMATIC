@@ -4,10 +4,9 @@ import re
 
 import anthropic
 
+from app.config import CLAUDE_MODEL
 from .models import Requirement
 from .step2_missing_docs import ARAMCO_STD_PATTERNS, INTL_STD_PATTERNS
-
-CLAUDE_MODEL = "claude-sonnet-4-5"
 
 # ---------------------------------------------------------------------------
 # Patterns compiled at module load time — RFP_Compliance_Patterns.md §1
@@ -202,7 +201,7 @@ def _classify_ambiguous_with_ai(
             "=== DOCUMENT TEXT END ==="
         )
         response = client.messages.create(
-            model="claude-sonnet-4-5",
+            model=CLAUDE_MODEL,
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )

@@ -15,3 +15,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+CLAUDE_MODEL = "claude-sonnet-4-6"

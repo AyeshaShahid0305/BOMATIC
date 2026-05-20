@@ -4,6 +4,8 @@ from pathlib import Path
 
 import anthropic
 
+from app.config import CLAUDE_MODEL
+
 _FRAMEWORK_FILE_MAP = {
     "NCA_ECC2": "NCA_ECC2_2024.json",
     "SAMA_CSF": "SAMA_CSF.json",
@@ -132,7 +134,7 @@ def classify_compliance_status(rows: list[dict], api_key: str) -> list[dict]:
         batch = rows[start: start + _AI_BATCH_SIZE]
         try:
             response = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=CLAUDE_MODEL,
                 max_tokens=2048,
                 messages=[{"role": "user", "content": _build_prompt(batch)}],
             )

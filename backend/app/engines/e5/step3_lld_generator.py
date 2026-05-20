@@ -3,9 +3,8 @@ import os
 
 import anthropic
 
+from app.config import CLAUDE_MODEL
 from .models import DesignSection
-
-CLAUDE_MODEL = "claude-sonnet-4-5"
 
 _LLD_TITLES = [
     "IP Address Scheme",

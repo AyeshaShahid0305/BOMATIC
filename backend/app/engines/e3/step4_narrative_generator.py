@@ -2,9 +2,8 @@ import os
 
 import anthropic
 
+from app.config import CLAUDE_MODEL
 from .models import ProposalSection
-
-CLAUDE_MODEL = "claude-sonnet-4-5"
 _MAX_TOKENS = 1500
 _PLACEHOLDER = "[Section content to be completed manually]"
 

@@ -24,6 +24,17 @@ from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
 
+"""E1 Pipeline — Step Numbering
+Steps 1–4  (run_e1_pipeline):       file intake, classification, extraction, legal trap detection
+Steps 5–7  (reserved):              numbers reserved for future steps — risk scoring, keyword enrichment,
+                                     requirement deduplication — not yet designed or implemented
+Steps 8–11 (checkpoint1_approve):   sector detection, framework selection, compliance matrix generation,
+                                     TP section linking
+Step 12    (checkpoint2_approve):   XLSX compliance matrix writer
+
+step_outputs keys match step numbers. Keys 5, 6, 7 are intentionally absent.
+"""
+
 _DATA_DIR = Path(__file__).parent.parent / "data" / "frameworks"
 
 

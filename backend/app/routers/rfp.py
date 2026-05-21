@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import shutil
 from pathlib import Path
@@ -56,9 +57,21 @@ async def upload_rfp_package(
                 status_code=400,
                 detail=f"File '{upload.filename}' exceeds the 20 MB limit.",
             )
+    total_size = sum(u.size for u in files if u.size is not None)
+    if total_size > 200 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total upload size {total_size // (1024*1024)} MB exceeds the 200 MB per-package limit.",
+        )
 
     # Use provided opportunity_id or generate one
     opp_id_str = opportunity_id or f"OPP-{uuid.uuid4().hex[:8].upper()}"
+
+    if not re.match(r'^[A-Z0-9][A-Z0-9\-]{0,63}$', opp_id_str):
+        raise HTTPException(
+            status_code=400,
+            detail="opportunity_id may only contain uppercase letters, digits, and hyphens (A-Z, 0-9, -). No dots, slashes, or special characters.",
+        )
 
     # Reject if opportunity_id already exists
     existing = db.query(Opportunity).filter(Opportunity.opportunity_id == opp_id_str).first()

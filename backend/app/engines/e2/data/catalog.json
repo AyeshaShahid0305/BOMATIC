@@ -79,4 +79,85 @@
     "keywords": ["dna", "license", "advantage", "catalyst", "9300", "subscription", "3-year"],
     "unit_price": 450.00
   }
+,
+  {
+    "sku": "FG-100F",
+    "product_name": "Fortinet FortiGate 100F Next-Generation Firewall",
+    "vendor": "Fortinet",
+    "category": "security",
+    "keywords": ["firewall", "fortigate", "ngfw", "100f", "fortinet", "utm"],
+    "unit_price": 4200.00
+  },
+  {
+    "sku": "FG-200F",
+    "product_name": "Fortinet FortiGate 200F Next-Generation Firewall",
+    "vendor": "Fortinet",
+    "category": "security",
+    "keywords": ["firewall", "fortigate", "ngfw", "200f", "fortinet", "utm"],
+    "unit_price": 8500.00
+  },
+  {
+    "sku": "FG-400F",
+    "product_name": "Fortinet FortiGate 400F Next-Generation Firewall",
+    "vendor": "Fortinet",
+    "category": "security",
+    "keywords": ["firewall", "fortigate", "ngfw", "400f", "fortinet", "datacenter"],
+    "unit_price": 18000.00
+  },
+  {
+    "sku": "FSW-248E-FPOE",
+    "product_name": "Fortinet FortiSwitch 248E-FPOE 48-Port PoE+ Switch",
+    "vendor": "Fortinet",
+    "category": "network",
+    "keywords": ["switch", "fortiswitch", "poe", "48-port", "fortinet", "248e"],
+    "unit_price": 3100.00
+  },
+  {
+    "sku": "FSW-124E-FPOE",
+    "product_name": "Fortinet FortiSwitch 124E-FPOE 24-Port PoE+ Switch",
+    "vendor": "Fortinet",
+    "category": "network",
+    "keywords": ["switch", "fortiswitch", "poe", "24-port", "fortinet", "124e"],
+    "unit_price": 1800.00
+  },
+  {
+    "sku": "FAP-431F",
+    "product_name": "Fortinet FortiAP 431F Wi-Fi 6 Access Point",
+    "vendor": "Fortinet",
+    "category": "network",
+    "keywords": ["access point", "ap", "wifi", "wireless", "fortiap", "wi-fi 6", "431f"],
+    "unit_price": 750.00
+  },
+  {
+    "sku": "FAP-234F",
+    "product_name": "Fortinet FortiAP 234F Indoor Access Point",
+    "vendor": "Fortinet",
+    "category": "network",
+    "keywords": ["access point", "ap", "wifi", "wireless", "fortiap", "indoor", "234f"],
+    "unit_price": 480.00
+  },
+  {
+    "sku": "FC-10-F100F-247-02-12",
+    "product_name": "FortiCare 24x7 Support for FortiGate 100F (1-Year)",
+    "vendor": "Fortinet",
+    "category": "license",
+    "keywords": ["forticare", "support", "maintenance", "100f", "24x7", "1-year"],
+    "unit_price": 620.00
+  },
+  {
+    "sku": "FC-10-F200F-247-02-12",
+    "product_name": "FortiCare 24x7 Support for FortiGate 200F (1-Year)",
+    "vendor": "Fortinet",
+    "category": "license",
+    "keywords": ["forticare", "support", "maintenance", "200f", "24x7", "1-year"],
+    "unit_price": 1100.00
+  },
+  {
+    "sku": "FC-10-F100F-131-02-12",
+    "product_name": "FortiGuard Unified Threat Protection for FortiGate 100F (1-Year)",
+    "vendor": "Fortinet",
+    "category": "license",
+    "keywords": ["fortiguard", "utp", "threat protection", "ips", "antivirus", "100f", "1-year"],
+    "unit_price": 890.00
+  }
 ]

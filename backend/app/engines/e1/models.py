@@ -59,6 +59,15 @@ class ComplianceRow:
 
 
 @dataclass
+class EvaluationCriterion:
+    criterion: str
+    weight: Optional[float]
+    category: str
+    pass_fail: bool
+    source_file: str
+
+
+@dataclass
 class E1Output:
     opportunity_id: str
     total_requirements: int

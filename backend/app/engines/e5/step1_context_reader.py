@@ -67,6 +67,11 @@ def read_context(session_id: str | None, db: Session) -> dict:
     matched_items: list = e2_data.get("matched_items", [])
     total_price: float = float(e2_data.get("total", 0.0))
 
+    e4_data: dict = pipeline.step_outputs.get('e4', {})
+    rfi_categories: list = e4_data.get('categories', [])
+    rfi_question_count: int = e4_data.get('total_questions', 0)
+    has_e4_data: bool = bool(e4_data)
+
     project_name = opportunity.project_name or ""
     if not project_name and documents:
         project_name = Path(documents[0].filename).stem
@@ -80,4 +85,7 @@ def read_context(session_id: str | None, db: Session) -> dict:
         "has_e1_data": True,
         "matched_items": matched_items,
         "total_price": total_price,
+        "rfi_categories": rfi_categories,
+        "rfi_question_count": rfi_question_count,
+        "has_e4_data": has_e4_data,
     }

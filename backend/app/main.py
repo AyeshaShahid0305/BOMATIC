@@ -13,12 +13,14 @@ from app.api.e4_routes import router as e4_router
 from app.api.e5_routes import router as e5_router
 
 BOMATIC_API_KEY = os.getenv("BOMATIC_API_KEY")
+if not BOMATIC_API_KEY:
+    raise RuntimeError("BOMATIC_API_KEY environment variable is not set. Set it in backend/.env before starting the server.")
 _EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if BOMATIC_API_KEY and request.url.path not in _EXCLUDED_PATHS:
+        if request.url.path not in _EXCLUDED_PATHS:
             if request.headers.get("X-API-Key") != BOMATIC_API_KEY:
                 return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
         return await call_next(request)

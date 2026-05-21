@@ -15,6 +15,7 @@ from app.engines.e1.step1_classifier import classify_file
 from app.engines.e1.step2_missing_docs import detect_missing_documents
 from app.engines.e1.step3_requirements_extractor import extract_requirements
 from app.engines.e1.step4_legal_trap_flagger import detect_legal_traps
+from app.engines.e1.step5_eval_criteria_extractor import extract_evaluation_criteria
 from app.engines.e1.step8_sector_detector import detect_sector
 from app.engines.e1.step9_framework_selector import select_frameworks
 from app.engines.e1.step10_matrix_generator import generate_compliance_matrix
@@ -120,7 +121,8 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
     classified_for_step2 = [{"filename": r["filename"], "type": r["type"]} for r in step1_results]
     missing   = detect_missing_documents(classified_for_step2, texts)
     reqs      = extract_requirements(texts, opportunity_id=opportunity_id)
-    flags     = detect_legal_traps(texts)
+    flags         = detect_legal_traps(texts)
+    eval_criteria = extract_evaluation_criteria(texts)
 
     # Persist: assign new dict so SQLAlchemy detects the change on the JSONB column
     pipeline.step_outputs = {
@@ -129,6 +131,7 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
         "2": [dataclasses.asdict(m) for m in missing],
         "3": [dataclasses.asdict(r) for r in reqs],
         "4": [dataclasses.asdict(f) for f in flags],
+        "5": eval_criteria,
     }
     pipeline.current_step = 4
     opportunity.status = "checkpoint_1_pending"

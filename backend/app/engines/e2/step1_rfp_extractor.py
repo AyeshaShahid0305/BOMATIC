@@ -1,17 +1,20 @@
 import json
+import logging
 import os
 
 import anthropic
 
 from app.config import CLAUDE_MODEL
 from .models import RFPLineItem
+
+logger = logging.getLogger(__name__)
 _MAX_TEXT_CHARS = 80_000  # ~20k tokens; keeps input well under context limit
 
 
 def extract_rfp_requirements(rfp_text: str) -> list[RFPLineItem]:
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        print("Warning: ANTHROPIC_API_KEY is not set — skipping RFP extraction")
+        logger.warning('ANTHROPIC_API_KEY is not set — skipping RFP extraction')
         return []
 
     prompt = (
@@ -53,7 +56,7 @@ def extract_rfp_requirements(rfp_text: str) -> list[RFPLineItem]:
             for item in items
         ]
     except Exception as e:
-        print(f"Warning: RFP extraction failed ({type(e).__name__}): {e}")
+        logger.warning('RFP extraction failed (%s): %s', type(e).__name__, e)
         return []
 
 

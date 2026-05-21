@@ -9,13 +9,6 @@ class ProposalSection:
     ai_generated: bool
 
 
-@dataclass
-class ProposalConfig:
-    project_type: str
-    sections: list
-    gbb_tier: str
-    gbb_multiplier: float
-
 
 @dataclass
 class GBBResult:

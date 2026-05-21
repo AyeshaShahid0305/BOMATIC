@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 
 import anthropic
 
 from app.config import CLAUDE_MODEL
 from .models import RFIQuestion
+
+logger = logging.getLogger(__name__)
 _MAX_TEXT_CHARS = 60_000
 
 _FALLBACK_QUESTIONS: list[dict] = [
@@ -87,7 +90,7 @@ def _build_prompt(context: dict) -> str:
 def generate_questions(context: dict) -> list[RFIQuestion]:
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        print("Warning: ANTHROPIC_API_KEY is not set — using fallback questions")
+        logger.warning('ANTHROPIC_API_KEY is not set — using fallback questions')
         return _make_fallback()
 
     prompt = _build_prompt(context)
@@ -112,7 +115,7 @@ def generate_questions(context: dict) -> list[RFIQuestion]:
             for i, item in enumerate(raw)
         ]
     except Exception as e:
-        print(f"Warning: question generation failed ({type(e).__name__}): {e}")
+        logger.warning('Question generation failed (%s): %s', type(e).__name__, e)
         return _make_fallback()
 
 

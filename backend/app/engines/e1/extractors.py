@@ -5,14 +5,31 @@ from docx import Document
 from openpyxl import load_workbook
 
 
+MAX_PDF_PAGES = 500
+MAX_PDF_CHARS = 2_000_000
+
+
 def extract_text_from_pdf(file_path: str | Path) -> dict:
     try:
         path = Path(file_path)
         pages = []
         with pdfplumber.open(path) as pdf:
             page_count = len(pdf.pages)
+            if page_count > MAX_PDF_PAGES:
+                return {
+                    "text": "",
+                    "page_count": page_count,
+                    "is_image_only": False,
+                    "error": f"PDF has {page_count} pages which exceeds the {MAX_PDF_PAGES}-page limit.",
+                }
+            total_chars = 0
             for page in pdf.pages:
-                pages.append(page.extract_text() or "")
+                page_text = page.extract_text() or ""
+                pages.append(page_text)
+                total_chars += len(page_text)
+                if total_chars > MAX_PDF_CHARS:
+                    pages.append("[TRUNCATED: document exceeds character limit]")
+                    break
         text = "\n".join(pages)
         is_image_only = len(text.strip()) < 100
         return {"text": text, "page_count": page_count, "is_image_only": is_image_only, "error": None}

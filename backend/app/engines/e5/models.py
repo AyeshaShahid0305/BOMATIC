@@ -16,5 +16,4 @@ class DesignDocument:
     project_name: str
     hld_sections: List[DesignSection] = field(default_factory=list)
     lld_sections: List[DesignSection] = field(default_factory=list)
-    topology_description: str = ""
     generated_from: str = "e1"   # "e1" or "e4"

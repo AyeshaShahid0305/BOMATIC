@@ -1,9 +1,12 @@
+import logging
 import os
 
 import anthropic
 
 from app.config import CLAUDE_MODEL
 from .models import ProposalSection
+
+logger = logging.getLogger(__name__)
 _MAX_TOKENS = 1500
 _PLACEHOLDER = "[Section content to be completed manually]"
 
@@ -132,7 +135,7 @@ def generate_narratives(
 ) -> dict[int, str]:
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        print("Warning: ANTHROPIC_API_KEY is not set — returning placeholders for all sections")
+        logger.warning('ANTHROPIC_API_KEY is not set — returning placeholders for all sections')
         return {s.id: _PLACEHOLDER for s in sections}
 
     client = anthropic.Anthropic(api_key=api_key)
@@ -153,8 +156,7 @@ def generate_narratives(
             )
             results[section.id] = response.content[0].text.strip()
         except Exception as e:
-            print(f"Warning: narrative generation failed for section {section.id} "
-                  f"'{section.title}' ({type(e).__name__}): {e}")
+            logger.warning('Narrative generation failed for section %s', section.id)
             results[section.id] = _PLACEHOLDER
 
     return results

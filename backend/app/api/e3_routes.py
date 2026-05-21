@@ -14,6 +14,7 @@ from app.engines.e2.step4_gap_analyzer import analyze_gaps
 from app.engines.e3 import run_e3_pipeline
 from app.models.document import Document
 from app.models.opportunity import Opportunity
+from app.models.pipeline_state import PipelineState
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e3" / "output"
 
@@ -35,9 +36,17 @@ async def generate_proposal(
     if not opportunity:
         raise HTTPException(status_code=404, detail=f"Session '{rfp_session_id}' not found.")
 
+    pipeline_state = (
+        db.query(PipelineState)
+        .filter(PipelineState.opportunity_id == opportunity.id)
+        .first()
+    )
+    persisted_e2 = (pipeline_state.step_outputs or {}).get('e2') if pipeline_state else None
     pricing_summary = None
 
-    if boq_template is not None:
+    if persisted_e2:
+        pricing_summary = persisted_e2
+    elif boq_template is not None:
         documents = (
             db.query(Document)
             .filter(Document.opportunity_id == opportunity.id)
@@ -63,7 +72,10 @@ async def generate_proposal(
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    return run_e3_pipeline(rfp_session_id, db, gbb_tier, pricing_summary)
+    try:
+        return run_e3_pipeline(rfp_session_id, db, gbb_tier, pricing_summary)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/download/{filename}")

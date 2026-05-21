@@ -113,6 +113,20 @@ def assemble_proposal(
             "ai_generated": section.ai_generated,
         })
 
+    required_total = sum(1 for s in assembled if s['required'])
+    placeholder_count = sum(
+        1 for s in assembled
+        if s['required'] and _PLACEHOLDER in s['content']
+    )
+    if required_total > 0:
+        placeholder_pct = placeholder_count / required_total
+        if placeholder_pct > 0.5:
+            raise ValueError(
+                f'Proposal is incomplete: {placeholder_count} of {required_total} required sections '
+                f'still contain placeholder content ({int(placeholder_pct * 100)}%). '
+                f'Generate AI narratives for all required sections before exporting.'
+            )
+
     return assembled
 
 

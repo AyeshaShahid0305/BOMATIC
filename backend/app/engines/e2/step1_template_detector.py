@@ -9,6 +9,8 @@ _CISCO_SKU_RE = re.compile(r"^[A-Z][A-Z0-9]{1,}-[A-Z0-9]")
 
 FORMAT_1_CCW = "FORMAT_1_CCW"
 UNKNOWN = "UNKNOWN"
+FORMAT_2_ARAMCO = "FORMAT_2_ARAMCO"
+FORMAT_3_NTT = "FORMAT_3_NTT"
 
 
 def detect_template(file_path: Path) -> BoQDetectionResult:
@@ -58,6 +60,50 @@ def detect_template(file_path: Path) -> BoQDetectionResult:
                     header_row_index=0,
                 )
 
+        # 4. Aramco format — sheet name or header pattern
+        ARAMCO_SHEET_NAMES = {'boq', 'bill of quantities', 'boq sheet', 'price schedule', 'price list'}
+        ARAMCO_HEADERS = {'item no', 'item description', 'unit rate', 'quantity', 'amount'}
+        for name in sheet_names:
+            if name.lower() in ARAMCO_SHEET_NAMES:
+                return BoQDetectionResult(
+                    format_type=FORMAT_2_ARAMCO,
+                    confidence=0.9,
+                    sheet_name=name,
+                    header_row_index=0,
+                )
+        for name in sheet_names:
+            ws = wb[name]
+            header_row = [h.lower() for h in _get_row_values(ws, 1)]
+            matched = sum(1 for h in ARAMCO_HEADERS if any(h in cell for cell in header_row))
+            if matched >= 3:
+                return BoQDetectionResult(
+                    format_type=FORMAT_2_ARAMCO,
+                    confidence=0.7 + 0.05 * matched,
+                    sheet_name=name,
+                    header_row_index=0,
+                )
+        # 5. NTT format — sheet name or header pattern
+        NTT_SHEET_NAMES = {'bom', 'bill of materials', 'pricing', 'price sheet', 'ntt boq'}
+        NTT_HEADERS = {'part no', 'product description', 'list price', 'net price', 'quantity', 'item'}
+        for name in sheet_names:
+            if name.lower() in NTT_SHEET_NAMES:
+                return BoQDetectionResult(
+                    format_type=FORMAT_3_NTT,
+                    confidence=0.9,
+                    sheet_name=name,
+                    header_row_index=0,
+                )
+        for name in sheet_names:
+            ws = wb[name]
+            header_row = [h.lower() for h in _get_row_values(ws, 1)]
+            matched = sum(1 for h in NTT_HEADERS if any(h in cell for cell in header_row))
+            if matched >= 3:
+                return BoQDetectionResult(
+                    format_type=FORMAT_3_NTT,
+                    confidence=0.7 + 0.05 * matched,
+                    sheet_name=name,
+                    header_row_index=0,
+                )
         return BoQDetectionResult(
             format_type=UNKNOWN,
             confidence=0.5,

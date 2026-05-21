@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 
@@ -7,6 +8,8 @@ import anthropic
 from app.config import CLAUDE_MODEL
 from .models import Requirement
 from .step2_missing_docs import ARAMCO_STD_PATTERNS, INTL_STD_PATTERNS
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Patterns compiled at module load time — RFP_Compliance_Patterns.md §1
@@ -179,7 +182,7 @@ def _classify_ambiguous_with_ai(
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        print("Warning: ANTHROPIC_API_KEY is not set — skipping AI classification (is_ai_enhanced=False)")
+        logger.warning('ANTHROPIC_API_KEY is not set — skipping AI classification (is_ai_enhanced=False)')
         return []
 
     try:
@@ -209,7 +212,7 @@ def _classify_ambiguous_with_ai(
         return [(item["classification"], item["sentence"], float(item["confidence"]))
                 for item in items]
     except Exception as e:
-        print(f"Warning: AI classification failed ({type(e).__name__}): {e}")
+        logger.warning('AI classification failed (%s): %s', type(e).__name__, e)
         return [("optional", s, 0.50) for s in sentences]
 
 

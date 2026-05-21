@@ -1,0 +1,581 @@
+claude --dangerously-skip-permissions -p "
+
+ 
+
+=== FULL REPO AUDIT — READ-ONLY ===
+
+ 
+
+You are performing a brutally honest technical audit of this repository. Your audience is the architect who built it. Do not encourage. Do not sugarcoat. Find defects, risks, gaps, lies, and broken seams.
+
+ 
+
+RULES:
+
+- Do NOT modify, create, delete, rename, move, or refactor any file.
+
+- Do NOT install packages.
+
+- Do NOT enter or scan anything under stc-knowledge/ — that folder is out of scope.
+
+- You MAY run read-only commands: cat, grep, find, ls, tree, wc, head, tail.
+
+- You MAY run: npx tsc --noEmit (typecheck only, no output files).
+
+- You MAY run: npx vitest run --reporter=verbose (tests only, no file modifications).
+
+- You MAY run: grep -r to search patterns across the codebase.
+
+- Before running ANY command that could create files, caches, or artifacts, STOP and explain why. Do not run it.
+
+ 
+
+=== CONTEXT ===
+
+ 
+
+This is BOMATIC — a multi-vendor pre-sales deliverable generation platform for Systems Integrators (SIs/VARs). It takes RFP packages, RFI responses, or direct requirements as input and produces priced BoMs, compliance matrices, technical proposals, HLD/LLD documents, and diagrams.
+
+ 
+
+The product targets 5 sweet spots:
+
+ 
+
+SS1 (Gate 2): RFP package parser + compliance matrix — Semi-automate
+
+SS2 (Gate 4): BoM construction dual mode (RFP fills client template, RFI generates from scratch) — Fully automate
+
+SS3 (Gate 5): Proposal authorship / Technical Proposal — Semi-automate
+
+SS4 (Gate 2): RFI questionnaire generator + requirements gathering — Semi-automate
+
+SS5 (Gate 3): Design + HLD/LLD authorship — Semi-automate
+
+ 
+
+The engine mapping is: E1=SS1, E2=SS2, E3=SS3, E4=SS4, E5=SS5.
+
+ 
+
+Three intake modes route to different engine sequences:
+
+- RFP mode: E1 → E2 → E3
+
+- Quick BoM mode: E2 → E3
+
+- RFI mode: E4 → E5 → E2 → E3
+
+ 
+
+First tenant: STC Solutions. Vendors: Cisco + Fortinet.
+
+ 
+
+=== WHAT TO AUDIT ===
+
+ 
+
+Perform ALL of the following. Do not skip any section.
+
+ 
+
+--- SECTION 1: STRUCTURE MAP ---
+
+ 
+
+Map the full repo structure (excluding stc-knowledge/ and node_modules/). For each major folder, state:
+
+- What it contains
+
+- What it is supposed to do
+
+- Whether it looks connected or orphaned
+
+- Whether it belongs in current scope or is legacy/outdated
+
+ 
+
+--- SECTION 2: BUILD AND TYPE HEALTH ---
+
+ 
+
+Run: npx tsc --noEmit
+
+Report: pass/fail, any type errors, count of errors by file.
+
+ 
+
+Run: npx vitest run --reporter=verbose 2>&1 | tail -50
+
+Report: total tests, pass count, fail count, skip count, any failures with file+test name.
+
+ 
+
+--- SECTION 3: PIPELINE INTEGRITY (CRITICAL) ---
+
+ 
+
+This is the most important section. Trace the ACTUAL runtime data flow for each intake mode by reading the real code — not docs, not comments, not aspirational architecture files.
+
+ 
+
+For RFP mode (E1 → E2 → E3):
+
+a. What happens when a user uploads PDF/DOCX/XLSX files via the UI?
+
+b. Does the intake API actually extract text from uploaded documents?
+
+c. Does E1 receive the extracted text or just file paths?
+
+d. What does E1 actually output? Trace the artifacts.
+
+e. Does E2 receive E1 artifacts? Which ones? How?
+
+f. What does E2 actually output? Is there a real filled BoQ/Excel?
+
+g. Does E3 receive E1+E2 artifacts? Which ones?
+
+h. Does E3 produce a real downloadable DOCX?
+
+ 
+
+For Quick BoM mode (E2 → E3):
+
+a. Can the user upload a BoQ file in this mode?
+
+b. Does E2 parse the uploaded file or only pasted text?
+
+c. Is the output a real priced Excel file?
+
+ 
+
+For RFI mode (E4 → E5 → E2 → E3):
+
+a. Is this mode accessible from the UI?
+
+b. Is E4 actually called by the coordinator/pipeline?
+
+c. Is E5 actually called by the coordinator/pipeline?
+
+d. Does E5 output flow into E2?
+
+e. Does the full chain produce real artifacts?
+
+ 
+
+For each question: cite the exact file, function, and line number. Say YES (works) or NO (broken/stubbed/fake) with evidence.
+
+ 
+
+--- SECTION 4: SWEET SPOT DEEP DIVE ---
+
+ 
+
+For each sweet spot, check EVERY item listed below. For each item, rate: REAL (working code with tests), PARTIAL (code exists but incomplete/untested/disconnected), FAKE (placeholder/hardcoded/mocked at runtime), or MISSING.
+
+ 
+
+SS1 — RFP Parser + Compliance Matrix:
+
+- Multi-file RFP package ingestion
+
+- File type classification (legal, commercial, technical, BoQ, NDA, scope, certificates)
+
+- PDF text extraction
+
+- DOCX text extraction
+
+- Excel content extraction
+
+- Missing document detection (referenced annexes/appendices not found)
+
+- Mandatory vs optional requirement extraction
+
+- Legal/compliance trap detection
+
+- Evaluation criteria extraction and weight parsing
+
+- Compliance framework mapping (DGCL, NCA ECC, ISO 27001, SACS)
+
+- Compliance matrix generation with status per requirement
+
+- Cross-reference linking (requirement → proposal section)
+
+- Bilingual Arabic/English detection
+
+- Risk flag generation
+
+ 
+
+SS2 — BoM Construction:
+
+- BoQ template parser (Types A-E from BoQ_Template_Patterns.md)
+
+- Version detection (2022 vs 2024+ Aramco column shift)
+
+- SKU normalization
+
+- Accessory selector (PSU, fan, antenna, stacking, optics, power cord, rack mount)
+
+- Licensing calculator (DNA, Smart Net, FortiCare, FortiGuard)
+
+- Support contract selector
+
+- 9 cost stack formulas (CS-001 through CS-009)
+
+- 17 validation rules
+
+- Anomaly detection
+
+- Vendor catalog lookup (real or fake?)
+
+- EoX/EoS checking (real or fake?)
+
+- List price lookup (real or fake?)
+
+- Distributor margin/discount application
+
+- Currency and VAT handling
+
+- Format-preserving Excel output (write back to client BoQ template)
+
+- CCW/distributor export Excel
+
+- Quick BoM from pasted text
+
+- Quick BoM from uploaded file
+
+- RFI-mode BoM from E5 component list
+
+ 
+
+SS3 — Proposal Authorship:
+
+- 14-section proposal structure
+
+- Deterministic sections (which ones?)
+
+- AI-generated sections (which ones?)
+
+- Boilerplate knowledge base
+
+- Good/Better/Best pricing tiers
+
+- Margin analysis per tier
+
+- DOCX generation
+
+- XLSX financial summary generation
+
+- Uses E1 requirements as input
+
+- Uses E2 BoM/pricing as input
+
+- Uses E4 requirements baseline as input
+
+- Uses E5 design artifacts as input
+
+- Placeholder detection and blocking
+
+- Commitments tracker
+
+- Revision/version tracking
+
+- NTT or client-specific template support
+
+ 
+
+SS4 — RFI Questionnaire + Requirements:
+
+- Question bank (how many questions? which sections?)
+
+- Project type detection
+
+- Emphasis matrix (project type → section priority)
+
+- Questionnaire generation and Markdown export
+
+- AI question customization
+
+- Response parsing (Excel)
+
+- Response parsing (free text/email)
+
+- Gap detection (deterministic)
+
+- Gap detection (AI-enhanced: contradictions, assumptions)
+
+- Requirements baseline builder (5 categories)
+
+- Checkpoint: review questionnaire before sending
+
+- Checkpoint: validate requirements baseline
+
+- Output feeds E5 design engine
+
+- Output feeds E2 BoM engine
+
+ 
+
+SS5 — Design + HLD/LLD:
+
+- Methodology selector (PPDIOO decision tree)
+
+- Framework selection (TOGAF, SAFE, NIST, ITIL)
+
+- Topology recommender (6 patterns)
+
+- Sizing calculator (device specs lookup)
+
+- IP/VLAN planner
+
+- Port map generator
+
+- Cable schedule generator
+
+- QoS policy generator (Cisco 8-class + Fortinet 6-class)
+
+- Migration approach selector
+
+- Compatibility validator
+
+- Rack elevation generator
+
+- HLD 12-section narrative (deterministic + AI)
+
+- LLD 21-section narrative (deterministic + AI)
+
+- HLD DOCX generation
+
+- LLD DOCX generation
+
+- Diagram generation (draw.io XML)
+
+- Component list builder (feeds E2)
+
+- Checkpoint: design approach review
+
+- Checkpoint: HLD review
+
+- Checkpoint: LLD review
+
+- Output directory exists and is created automatically
+
+- Document download route works
+
+ 
+
+--- SECTION 5: CROSS-ENGINE DATA FLOW ---
+
+ 
+
+Read src/coordinator/types.ts. For each engine (E1-E5), list:
+
+- The artifact type (e.g. E1Artifacts, E2Artifacts)
+
+- What fields are in each artifact type
+
+- Whether the downstream engine actually reads those fields
+
+- Whether the types match (no any, no casting, no silent drops)
+
+ 
+
+Then check:
+
+- Does E1 compliance matrix output actually feed E3 proposal compliance section?
+
+- Does E2 pricing output actually feed E3 financial proposal section?
+
+- Does E4 requirements baseline actually feed E5 design inputs?
+
+- Does E5 component list actually feed E2 RFI-mode BoM?
+
+- Are there type mismatches, missing fields, or broken handoffs between any engines?
+
+ 
+
+--- SECTION 6: UI COMPLETENESS ---
+
+ 
+
+List every page under src/app/. For each page:
+
+- Does it render?
+
+- Does it fetch from a real API route?
+
+- Does the API route call real engine logic or return stubs?
+
+- Is the page accessible from the main navigation/wizard?
+
+- Are there dead/disabled/hidden UI paths?
+
+ 
+
+--- SECTION 7: CODE QUALITY ---
+
+ 
+
+Search for:
+
+- grep -rn 'TODO\|FIXME\|HACK\|XXX\|PLACEHOLDER\|placeholder\|hardcoded\|hardcode\|mock\|stub\|fake\|dummy' src/ --include='*.ts' --include='*.tsx' | head -80
+
+- grep -rn 'as any\|@ts-ignore\|@ts-expect-error' src/ --include='*.ts' --include='*.tsx' | head -40
+
+- grep -rn 'throw new Error\|throw Error\|process.exit' src/ --include='*.ts' --include='*.tsx' | head -40
+
+- Any file over 200 lines: find src/ -name '*.ts' -o -name '*.tsx' | xargs wc -l | sort -rn | head -20
+
+- Any function that returns hardcoded/empty data at runtime
+
+ 
+
+--- SECTION 8: SECURITY ---
+
+ 
+
+Search for:
+
+- grep -rn 'apiKey\|api_key\|API_KEY\|secret\|SECRET\|password\|PASSWORD\|token\|TOKEN\|Bearer' src/ .env* --include='*.ts' --include='*.tsx' --include='*.env*' | head -30
+
+- Unsafe file handling (path traversal, unsanitized filenames)
+
+- Missing auth checks on API routes
+
+- Tenant isolation gaps
+
+- Prompt injection vectors (customer document text → LLM prompt without sanitization)
+
+ 
+
+--- SECTION 9: TESTING GAPS ---
+
+ 
+
+After running the test suite, identify:
+
+- Which engines have the most test coverage?
+
+- Which engines have the least?
+
+- Are there integration tests that test cross-engine data flow (not mocked)?
+
+- Are there tests that use real fixture files (PDF, DOCX, XLSX)?
+
+- Are there tests that validate generated output files (DOCX, XLSX)?
+
+- List the 10 most dangerous untested paths.
+
+ 
+
+--- SECTION 10: DEMO READINESS ---
+
+ 
+
+Imagine you are about to demo this to NTT as a design partner. Walk through:
+
+1. User creates a new estimate, selects RFP mode, uploads a real Aramco RFP package (3 PDFs + 1 XLSX BoQ). What happens? Will it work? Where will it break?
+
+2. User creates a quick BoM, pastes 10 line items. What happens?
+
+3. User creates an RFI, generates a questionnaire, uploads a response. What happens?
+
+4. User views the generated proposal and downloads the DOCX. What happens?
+
+5. User views the design page and downloads the HLD. What happens?
+
+ 
+
+For each scenario: will it work end-to-end? If not, where exactly does it fail?
+
+ 
+
+=== OUTPUT FORMAT ===
+
+ 
+
+Structure your report exactly as follows:
+
+ 
+
+A. EXECUTIVE SUMMARY (5 sentences max)
+
+- Overall health
+
+- Alignment with 5 sweet spots
+
+- Demo readiness: Ready / Partially Ready / Not Ready
+
+- Top 3 risks
+
+ 
+
+B. BUILD HEALTH
+
+- tsc result
+
+- vitest result
+
+- Total test count
+
+ 
+
+C. PIPELINE INTEGRITY MATRIX
+
+Table with columns: Mode | Step | Status (WORKS/BROKEN/STUBBED) | File:Line | Evidence
+
+ 
+
+D. SWEET SPOT COVERAGE MATRIX
+
+Table with columns: Sweet Spot | Item | Status (REAL/PARTIAL/FAKE/MISSING) | File:Line
+
+ 
+
+E. CROSS-ENGINE DATA FLOW
+
+Table with columns: From | To | Field | Status (CONNECTED/BROKEN/MISSING) | Evidence
+
+ 
+
+F. UI MAP
+
+Table with columns: Page Path | Renders | API Connected | Accessible | Status
+
+ 
+
+G. CODE QUALITY FINDINGS
+
+List with: Severity | File:Line | Issue | Impact
+
+ 
+
+H. SECURITY FINDINGS
+
+List with: Severity | File:Line | Issue | Risk
+
+ 
+
+I. TESTING GAPS
+
+List of 10 most dangerous untested paths.
+
+ 
+
+J. DEMO WALKTHROUGH
+
+For each of the 5 scenarios: PASS / FAIL with exact failure point.
+
+ 
+
+K. TOP 15 PRIORITY FIXES
+
+Ranked list. For each: severity, sweet spot affected, file, what to fix, why.
+
+ 
+
+Do not be vague. Cite files and line numbers. If something is unclear, flag it as UNVERIFIED. If something is missing, say MISSING. If something is fake, say FAKE.
+
+"

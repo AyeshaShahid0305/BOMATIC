@@ -10,6 +10,8 @@ from app.db import get_db
 from app.engines.e2 import run_e2_pipeline
 from app.models.document import Document
 from app.models.opportunity import Opportunity
+from app.models.pipeline_state import PipelineState
+from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e2" / "output"
 
@@ -36,6 +38,12 @@ async def analyze_boq(
         .all()
     )
 
+    pipeline_state = (
+        db.query(PipelineState)
+        .filter(PipelineState.opportunity_id == opportunity.id)
+        .first()
+    )
+
     rfp_texts = [doc.text_content for doc in documents if doc.text_content]
     if not rfp_texts:
         raise HTTPException(
@@ -52,6 +60,19 @@ async def analyze_boq(
         template_path.write_bytes(await boq_template.read())
 
         result = run_e2_pipeline(rfp_text, template_path)
+
+        if pipeline_state:
+            outputs = dict(pipeline_state.step_outputs or {})
+            outputs['e2'] = {
+                'matched_items': result.get('matched_items', []),
+                'subtotal': result.get('subtotal', 0),
+                'total_price': result.get('total_price', 0),
+                'output_file': Path(result['output_file']).name,
+            }
+            pipeline_state.step_outputs = outputs
+            flag_modified(pipeline_state, 'step_outputs')
+            db.commit()
+
         # Replace full path with just the filename so the caller can use the download endpoint
         result["output_file"] = Path(result["output_file"]).name
         return result

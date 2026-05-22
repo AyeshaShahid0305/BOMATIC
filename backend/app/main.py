@@ -1,5 +1,3 @@
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,8 +9,9 @@ from app.api.e2_routes import router as e2_router
 from app.api.e3_routes import router as e3_router
 from app.api.e4_routes import router as e4_router
 from app.api.e5_routes import router as e5_router
+from app.config import get_settings
 
-BOMATIC_API_KEY = os.getenv("BOMATIC_API_KEY")
+BOMATIC_API_KEY = get_settings().bomatic_api_key
 if not BOMATIC_API_KEY:
     raise RuntimeError("BOMATIC_API_KEY environment variable is not set. Set it in backend/.env before starting the server.")
 _EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc"}

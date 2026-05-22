@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://bomatic:bomatic@localhost:9876/bomatic"
     anthropic_api_key: str = ""
     upload_dir: str = "storage"
+    bomatic_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

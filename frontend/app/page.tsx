@@ -102,6 +102,24 @@ export default function Home() {
               Open HLD/LLD Generator
             </a>
           </div>
+
+          <div className="bg-white rounded-xl border border-teal-200 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center text-teal-700 font-bold text-sm">
+                BoM
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800">Quick BoM</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Upload a BoQ template and get instant pricing — no RFP session needed.
+            </p>
+            <a
+              href="/quick-bom"
+              className="block w-full py-2 px-4 bg-teal-600 text-white rounded-lg text-sm font-medium text-center hover:bg-teal-700"
+            >
+              Open Quick BoM
+            </a>
+          </div>
         </div>
 
         <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

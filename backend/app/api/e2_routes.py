@@ -20,38 +20,43 @@ router = APIRouter(prefix="/e2", tags=["e2"])
 
 @router.post("/analyze")
 async def analyze_boq(
-    rfp_session_id: str = Form(...),
+    rfp_session_id: str = Form(default=""),
     boq_template: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    opportunity = (
-        db.query(Opportunity)
-        .filter(Opportunity.opportunity_id == rfp_session_id)
-        .first()
-    )
-    if not opportunity:
-        raise HTTPException(status_code=404, detail=f"Session '{rfp_session_id}' not found.")
+    pipeline_state = None
 
-    documents = (
-        db.query(Document)
-        .filter(Document.opportunity_id == opportunity.id)
-        .all()
-    )
+    if rfp_session_id.strip():
+        opportunity = (
+            db.query(Opportunity)
+            .filter(Opportunity.opportunity_id == rfp_session_id)
+            .first()
+        )
+        if not opportunity:
+            raise HTTPException(status_code=404, detail=f"Session '{rfp_session_id}' not found.")
 
-    pipeline_state = (
-        db.query(PipelineState)
-        .filter(PipelineState.opportunity_id == opportunity.id)
-        .first()
-    )
-
-    rfp_texts = [doc.text_content for doc in documents if doc.text_content]
-    if not rfp_texts:
-        raise HTTPException(
-            status_code=400,
-            detail="No RFP text found for this session. Run E1 analysis first.",
+        documents = (
+            db.query(Document)
+            .filter(Document.opportunity_id == opportunity.id)
+            .all()
         )
 
-    rfp_text = "\n\n".join(rfp_texts)
+        pipeline_state = (
+            db.query(PipelineState)
+            .filter(PipelineState.opportunity_id == opportunity.id)
+            .first()
+        )
+
+        rfp_texts = [doc.text_content for doc in documents if doc.text_content]
+        if not rfp_texts:
+            raise HTTPException(
+                status_code=400,
+                detail="No RFP text found for this session. Run E1 analysis first.",
+            )
+
+        rfp_text = "\n\n".join(rfp_texts)
+    else:
+        rfp_text = ""
 
     tmp_dir = Path(tempfile.mkdtemp())
     try:

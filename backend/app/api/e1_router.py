@@ -317,7 +317,7 @@ async def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)
         "xlsx_path": str(xlsx_path),
     }
     pipeline.current_step = 12
-    opportunity.status = "complete"
+    opportunity.status = "e1_complete"
     db.commit()
 
     return {

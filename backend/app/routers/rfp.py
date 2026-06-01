@@ -12,7 +12,7 @@ from app.models.opportunity import Opportunity
 from app.models.document import Document
 from app.models.pipeline_state import PipelineState
 
-router = APIRouter(prefix="/rfp", tags=["rfp"])
+router = APIRouter(tags=["rfp"])
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".xlsx", ".xls", ".dwg", ".msg", ".doc"}
 
@@ -22,7 +22,7 @@ def _get_file_format(filename: str) -> str:
     return ext.lstrip(".") if ext else "unknown"
 
 
-@router.post("/packages", status_code=status.HTTP_201_CREATED)
+@router.post("/rfp/packages", status_code=status.HTTP_201_CREATED)
 async def upload_rfp_package(
     files: list[UploadFile] = File(...),
     opportunity_id: Optional[str] = Form(None),
@@ -135,7 +135,32 @@ async def upload_rfp_package(
     }
 
 
-@router.get("/packages/{opportunity_id}")
+
+@router.get("/opportunities")
+def list_opportunities(db: Session = Depends(get_db)):
+    """Return all opportunities with their pipeline progress."""
+    rows = (
+        db.query(Opportunity, PipelineState)
+        .join(PipelineState, PipelineState.opportunity_id == Opportunity.id)
+        .order_by(Opportunity.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "opportunity_id": opportunity.opportunity_id,
+            "project_name": opportunity.project_name,
+            "client_name": opportunity.client_name,
+            "status": opportunity.status,
+            "current_step": pipeline.current_step,
+            "created_at": opportunity.created_at.isoformat(),
+            "engines_completed": list((pipeline.step_outputs or {}).keys()),
+        }
+        for opportunity, pipeline in rows
+    ]
+
+
+@router.get("/rfp/packages/{opportunity_id}")
 def get_rfp_package(opportunity_id: str, db: Session = Depends(get_db)):
     """Retrieve an uploaded RFP package with its document list and pipeline status."""
     opportunity = (

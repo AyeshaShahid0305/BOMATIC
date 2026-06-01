@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type E3Result = {
   output_file: string;
@@ -39,6 +39,12 @@ export default function E3Page() {
   const [result, setResult] = useState<E3Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("session_id") ?? params.get("rfp_session_id");
+    if (id) setSessionId(id);
+  }, []);
 
   function pickFile(f: File) {
     if (!f.name.match(/\.(xlsx|xls)$/i)) {

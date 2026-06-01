@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 // ---------------------------------------------------------------------------
 // Shared primitives (same visual language as checkpoint1)
@@ -320,8 +320,6 @@ function GapAnalysis({ gaps }) {
 
 export default function Checkpoint2Page() {
   const { id } = useParams();
-  const router = useRouter();
-
   const [rows, setRows]       = useState([]);
   const [gaps, setGaps]       = useState(null);
   const [stats, setStats]     = useState(null);
@@ -330,6 +328,7 @@ export default function Checkpoint2Page() {
 
   const [savingRows, setSavingRows] = useState({});   // rowIndex → true/false
   const [approving, setApproving]   = useState(false);
+  const [checkpointComplete, setCheckpointComplete] = useState(false);
   const [toast, setToast]           = useState(null);
   const [expandedRows, setExpandedRows] = useState({});
 
@@ -407,7 +406,8 @@ export default function Checkpoint2Page() {
         message: "Compliance matrix generated and approved!",
         downloadUrl: `/api/e1/${id}/download/matrix`,
       });
-      setTimeout(() => router.push(`/e1/${id}/complete`), 4000);
+      setCheckpointComplete(true);
+      setApproving(false);
     } catch (err) {
       setToast({ message: `Approval failed: ${err.message}`, downloadUrl: null });
       setApproving(false);
@@ -514,6 +514,35 @@ export default function Checkpoint2Page() {
         <SectionCard title="Gap Analysis">
           <GapAnalysis gaps={gaps} />
         </SectionCard>
+        {checkpointComplete && (
+          <SectionCard title="Next Step">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                E1 is complete. Continue the guided flow with this opportunity already selected.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <a
+                  href={`/e2?session_id=${encodeURIComponent(id)}`}
+                  className="flex items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700"
+                >
+                  Generate Bill of Materials
+                </a>
+                <a
+                  href={`/e3?session_id=${encodeURIComponent(id)}`}
+                  className="flex items-center justify-center rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-700"
+                >
+                  Generate Technical Proposal
+                </a>
+                <a
+                  href="/opportunities"
+                  className="flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Go to Opportunities
+                </a>
+              </div>
+            </div>
+          </SectionCard>
+        )}
 
       </div>
 
@@ -528,11 +557,11 @@ export default function Checkpoint2Page() {
           </a>
           <button
             onClick={handleApprove}
-            disabled={approving}
+            disabled={approving || checkpointComplete}
             className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {approving && <Spinner small />}
-            {approving ? "Generating…" : "Approve & Generate Excel"}
+            {checkpointComplete ? "Approved" : approving ? "Generating…" : "Approve & Generate Excel"}
           </button>
         </div>
       </div>

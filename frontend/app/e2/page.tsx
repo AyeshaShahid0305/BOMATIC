@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type E2Result = {
   output_file: string;
@@ -33,6 +33,12 @@ export default function E2Page() {
   const [result, setResult] = useState<E2Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("session_id") ?? params.get("rfp_session_id");
+    if (id) setSessionId(id);
+  }, []);
 
   function pickFile(f: File) {
     if (!f.name.match(/\.(xlsx|xls)$/i)) {
@@ -257,6 +263,26 @@ export default function E2Page() {
                 </svg>
                 Download Excel BoQ
               </a>
+              <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4">
+                <h3 className="text-sm font-semibold text-green-900">Next Step</h3>
+                <p className="mt-1 text-sm text-green-800">
+                  BoM generation is complete. Continue with the same RFP session.
+                </p>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <a
+                    href={`/e3?session_id=${encodeURIComponent(sessionId.trim())}`}
+                    className="flex items-center justify-center rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-700"
+                  >
+                    Generate Technical Proposal
+                  </a>
+                  <a
+                    href="/opportunities"
+                    className="flex items-center justify-center rounded-lg border border-green-200 bg-white px-4 py-3 text-sm font-semibold text-green-800 hover:bg-green-100"
+                  >
+                    Go to Opportunities
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         )}

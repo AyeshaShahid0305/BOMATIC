@@ -11,6 +11,7 @@ from app.api.e4_routes import router as e4_router
 from app.api.e5_routes import router as e5_router
 from app.api.pipeline_routes import router as pipeline_router
 from app.api.auth_routes import router as auth_router
+from app.api.admin_routes import router as admin_router
 from app.config import get_settings
 
 BOMATIC_API_KEY = get_settings().bomatic_api_key
@@ -51,3 +52,4 @@ app.include_router(e4_router, prefix="/api")
 app.include_router(e5_router, prefix="/api")
 app.include_router(pipeline_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")

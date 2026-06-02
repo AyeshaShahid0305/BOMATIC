@@ -6,6 +6,7 @@ export default function E1UploadPage() {
   const [files, setFiles] = useState([]);
   const [dragging, setDragging] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [mode, setMode] = useState("rfp");
   const [loadingStage, setLoadingStage] = useState(null); // null | "uploading" | "analyzing"
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
@@ -29,6 +30,7 @@ export default function E1UploadPage() {
     const form = new FormData();
     files.forEach(f => form.append("files", f));
     if (projectName.trim()) form.append("project_name", projectName.trim());
+    form.append("mode", mode);
 
     let opportunityId;
 
@@ -44,6 +46,11 @@ export default function E1UploadPage() {
     } catch (err) {
       setError(err.message);
       setLoadingStage(null);
+      return;
+    }
+
+    if (mode === "rfi") {
+      router.push("/opportunities");
       return;
     }
 
@@ -67,7 +74,7 @@ export default function E1UploadPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Upload RFP Documents</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Upload Opportunity Documents</h1>
 
       <div
         onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
@@ -107,12 +114,42 @@ export default function E1UploadPage() {
                 className="shrink-0 text-gray-400 hover:text-red-500"
                 aria-label={`Remove ${f.name}`}
               >
-                ✕
+                &times;
               </button>
             </li>
           ))}
         </ul>
       )}
+
+      <div>
+        <p className="block text-sm font-medium text-gray-700 mb-2">Session mode</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { value: "rfp", label: "RFP", description: "Run E1 analysis after upload" },
+            { value: "rfi", label: "RFI", description: "Create an RFI-mode session" },
+          ].map(option => (
+            <label
+              key={option.value}
+              className={`cursor-pointer rounded-lg border px-4 py-3 text-sm transition-colors ${
+                mode === option.value
+                  ? "border-blue-500 bg-blue-50 text-blue-800"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="mode"
+                value={option.value}
+                checked={mode === option.value}
+                onChange={e => setMode(e.target.value)}
+                className="sr-only"
+              />
+              <span className="font-semibold">{option.label}</span>
+              <span className="mt-1 block text-xs text-gray-500">{option.description}</span>
+            </label>
+          ))}
+        </div>
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -145,9 +182,11 @@ export default function E1UploadPage() {
           </svg>
         )}
         {loadingStage === "uploading"
-          ? "Uploading files…"
+          ? "Uploading files..."
           : loadingStage === "analyzing"
-          ? "Analyzing RFP…"
+          ? "Analyzing RFP..."
+          : mode === "rfi"
+          ? "Create RFI Session"
           : "Analyze"}
       </button>
     </div>

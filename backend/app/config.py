@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     upload_dir: str = "storage"
     bomatic_api_key: str = ""
+    jwt_secret_key: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 480  # 8 hours
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

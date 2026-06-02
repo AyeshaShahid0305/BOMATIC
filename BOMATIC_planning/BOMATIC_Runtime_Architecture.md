@@ -1,25 +1,29 @@
 # BOMATIC — Runtime Architecture
 
-## Current Build Status (as of May 2026)
+## Current Build Status (as of June 2026)
 
 ### What is ACTUALLY built and working:
-- E1 Steps 1–4: file upload, text extraction, file classification, missing document detection, requirements extraction, legal trap detection
-- E1 Checkpoint UI: displays classified files, requirements, risk flags
-- E2: BoQ template detector and parser (FORMAT_1_CCW only) — no pricing, no Excel output
-- E3: Section title list and GBB multiplier table only — no DOCX generation
-- Basic FastAPI backend with database (PostgreSQL)
-- Basic Next.js frontend (home page + E1 upload page)
+- FastAPI backend with PostgreSQL persistence, API-key middleware, Alembic migrations, and pipeline-state storage.
+- Next.js frontend with home page, upload flow, opportunities dashboard, E1 checkpoints, E1 complete page, E2/E3/E4/E5 generator pages, and shared output download controls.
+- Opportunity dashboard supports RFP/RFI mode badges, mode-aware engine routing, and derived engine statuses.
+- E1 upload/package persistence, text extraction, classification, missing-document detection, requirements extraction, legal-trap detection, evaluation criteria extraction, sector detection, framework selection, compliance matrix generation, TP section linking, and XLSX compliance matrix output.
+- E1 writes a validated `PipelineState.step_outputs["e1"]` handoff using `E1Output` with `vendor_list`, `requirements_baseline`, `risk_flags`, `sector`, and `frameworks_selected`.
+- `/api/pipeline/{opportunity_id}/e1-outputs` validates and exposes the E1 handoff for downstream engines.
+- E2 BoM Builder detects/parses BoQ templates, reads E1 handoff from pipeline state, uses E1 `vendor_list` to filter catalog lookup, uses E1 `requirements_baseline` to seed BoM descriptions, runs catalog matching/gap analysis/pricing summary, writes Excel output, and persists `step_outputs["e2"]`.
+- E3 Proposal Generator reads E1/E2 context, applies G/B/B tiering, generates proposal narratives and DOCX output, and persists `step_outputs["e3"]`.
+- E4 RFI Generator creates RFI questionnaire output and persists `step_outputs["e4"]`.
+- E5 HLD/LLD Generator reads available upstream context, generates HLD/LLD document output, and persists `step_outputs["e5"]`.
+- Shared output listing/download API supports generated files by opportunity.
 
 ### What is NOT yet built:
-- E1 Steps 5–12: compliance matrix generation, framework mapping, bilingual detection, DOCX/XLSX output
-- E2: pricing engine, catalog lookup, EoX checking, licensing calculator, Excel writeback
-- E3: proposal generation, DOCX output, all AI narrative sections
-- E4: does not exist
-- E5: does not exist
-- Pipeline coordinator: engines are not connected to each other
-- Authentication: middleware exists but no user management
-- Any downloadable output files
-
+- Full E2 production-grade SKU/accessory/licensing/EoX validation stack.
+- E2 distributor export as a separate generated file.
+- E3 submission PDF generation.
+- E1 requirements DOCX generation.
+- Full editable checkpoint UIs for E2, E3, E4, and E5.
+- Full RFI-mode checkpoint route set for E4/E5.
+- Authentication user management beyond API-key middleware.
+- Production user/tenant isolation beyond reserved Opportunity fields.
 ---
 
 **Version:** 2.0 (replaces Hub-Spoke Architecture v1.0)

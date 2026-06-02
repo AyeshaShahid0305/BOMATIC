@@ -9,6 +9,7 @@ from .step3_e2_data_reader import read_e2_data
 from .step4_narrative_generator import generate_narratives
 from .step5_assembler import assemble_proposal
 from .step6_docx_writer import write_proposal
+from .step7_pdf_converter import convert_docx_to_pdf
 from .step8_gbb_pricing import calculate_gbb
 
 
@@ -29,8 +30,12 @@ def run_e3_pipeline(
     assembled = assemble_proposal(sections, narratives, e1_data, e2_data, gbb_result)
     output_path = write_proposal(assembled, e1_data["project_name"], gbb_tier)
 
+    # Convert DOCX to PDF (best-effort - None if LibreOffice unavailable)
+    pdf_path = convert_docx_to_pdf(output_path, output_path.parent)
+
     return {
         "output_file": output_path.name,
+        "pdf_file": pdf_path.name if pdf_path else None,
         "project_name": e1_data["project_name"],
         "section_count": len(assembled),
         "ai_generated_count": sum(1 for s in assembled if s["ai_generated"]),

@@ -25,9 +25,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <nav className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
+          <a href="/opportunities" className="text-sm font-semibold text-gray-800 hover:text-blue-600">
+            BOMATIC
+          </a>
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="text-xs text-gray-400 hover:text-gray-700"
+            >
+              Sign out
+            </button>
+          </form>
+        </nav>
         {children}
       </body>
     </html>

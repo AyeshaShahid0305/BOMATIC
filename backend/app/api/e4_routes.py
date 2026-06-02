@@ -47,6 +47,8 @@ async def generate_rfi(
                     'output_file': result.get('output_file', ''),
                 }
                 pipeline_state.step_outputs = outputs
+                pipeline_state.current_step = max(pipeline_state.current_step, 11)
+                opportunity.status = 'e4_complete'
                 flag_modified(pipeline_state, 'step_outputs')
                 db.commit()
     return result
@@ -67,3 +69,63 @@ def download_rfi(filename: str):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
+
+
+def _get_e4_opportunity_and_pipeline(opportunity_id: str, db: Session):
+    opportunity = (
+        db.query(Opportunity)
+        .filter(Opportunity.opportunity_id == opportunity_id)
+        .first()
+    )
+    if not opportunity:
+        raise HTTPException(status_code=404, detail=f"Opportunity '{opportunity_id}' not found.")
+    pipeline = (
+        db.query(PipelineState)
+        .filter(PipelineState.opportunity_id == opportunity.id)
+        .first()
+    )
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline state not found.")
+    return opportunity, pipeline
+
+
+@router.get("/{opportunity_id}/state")
+def get_e4_state(opportunity_id: str, db: Session = Depends(get_db)):
+    """Return E4 step outputs and opportunity info."""
+    opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+    e4_data = (pipeline.step_outputs or {}).get("e4")
+    if not e4_data:
+        raise HTTPException(status_code=404, detail="E4 has not been run for this opportunity.")
+    return {
+        "opportunity_id": opportunity_id,
+        "project_name": opportunity.project_name,
+        "status": opportunity.status,
+        "current_step": pipeline.current_step,
+        "e4": e4_data,
+    }
+
+
+@router.post("/{opportunity_id}/checkpoint/approve")
+def approve_e4_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
+    """Approve the E4 checkpoint. Returns next URL (E5 design)."""
+    opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+
+    if pipeline.current_step < 11:
+        raise HTTPException(
+            status_code=409,
+            detail="E4 not yet complete. Generate the RFI questionnaire first.",
+        )
+    if opportunity.status == "e4_approved":
+        raise HTTPException(status_code=409, detail="E4 checkpoint already approved.")
+
+    opportunity.status = "e4_approved"
+    pipeline.current_step = max(pipeline.current_step, 12)
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+
+    return {
+        "opportunity_id": opportunity_id,
+        "status": "e4_approved",
+        "next_url": f"/e5?session_id={opportunity_id}",
+        "message": "E4 approved. Proceed to E5 design generation.",
+    }

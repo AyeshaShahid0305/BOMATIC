@@ -2,22 +2,43 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type OpportunityMode = "rfp" | "rfi";
+
 type Opportunity = {
   opportunity_id: string | null;
   project_name: string | null;
   client_name: string | null;
+  mode?: OpportunityMode | null;
   status: string;
   current_step: number;
   created_at: string;
   engines_completed: string[];
 };
 
+const VALID_STATUS_STYLES: Record<string, string> = {
+  e1_pending: "bg-blue-100 text-blue-700",
+  e1_complete: "bg-green-100 text-green-700",
+  e2_pending: "bg-teal-100 text-teal-700",
+  e2_complete: "bg-green-100 text-green-700",
+  e3_pending: "bg-purple-100 text-purple-700",
+  e3_complete: "bg-green-100 text-green-700",
+  e4_pending: "bg-orange-100 text-orange-700",
+  e4_complete: "bg-green-100 text-green-700",
+  e5_pending: "bg-indigo-100 text-indigo-700",
+  e5_complete: "bg-green-100 text-green-700",
+};
+
 const statusStyles: Record<string, string> = {
+  ...VALID_STATUS_STYLES,
   uploaded: "bg-gray-100 text-gray-700",
   checkpoint_1_pending: "bg-blue-100 text-blue-700",
   checkpoint_2_pending: "bg-yellow-100 text-yellow-700",
-  e1_complete: "bg-green-100 text-green-700",
   complete: "bg-green-100 text-green-700",
+};
+
+const modeStyles: Record<OpportunityMode, string> = {
+  rfp: "bg-blue-50 text-blue-700 border-blue-200",
+  rfi: "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 function formatLabel(value: string) {
@@ -40,17 +61,27 @@ function formatDate(value: string) {
 
 function engineLink(opportunity: Opportunity) {
   const id = opportunity.opportunity_id;
-  if (!id) return "/e1/upload";
-  if (opportunity.status === "e1_complete" || opportunity.status === "complete" || opportunity.current_step >= 12) {
-    return `/e1/${id}/complete`;
+  const mode = opportunity.mode ?? "rfp";
+  const step = opportunity.current_step ?? 0;
+
+  if (!id) return mode === "rfi" ? "/e4" : "/e1/upload";
+
+  if (mode === "rfi") {
+    if (step < 4) return `/e4/${id}`;
+    if (step <= 10) return `/e4/${id}/checkpoint${step}`;
+    if (step === 11) return `/e5/${id}`;
+    if (step <= 20) return `/e5/${id}/checkpoint${step}`;
+    if (step === 21) return `/e2/${id}`;
+    return `/e3/${id}`;
   }
-  if (opportunity.status === "checkpoint_2_pending" || opportunity.current_step >= 11) {
-    return `/e1/${id}/checkpoint2`;
-  }
-  if (opportunity.status === "checkpoint_1_pending" || opportunity.current_step >= 4) {
-    return `/e1/${id}/checkpoint1`;
-  }
-  return "/e1/upload";
+
+  if (step < 4) return "/e1/upload";
+  if (step < 11) return `/e1/${id}/checkpoint1`;
+  if (step <= 11) return `/e1/${id}/checkpoint2`;
+  if (step === 12) return `/e2/${id}`;
+  if (step <= 20) return `/e2/${id}/checkpoint${step}`;
+  if (step === 21) return `/e3/${id}`;
+  return `/e3/${id}/review`;
 }
 
 function Spinner() {
@@ -82,7 +113,7 @@ export default function OpportunitiesPage() {
   }, []);
 
   const totalCompleted = useMemo(
-    () => opportunities.filter(item => item.status === "e1_complete" || item.status === "complete" || item.current_step >= 12).length,
+    () => opportunities.filter(item => item.status.endsWith("_complete")).length,
     [opportunities]
   );
 
@@ -97,13 +128,13 @@ export default function OpportunitiesPage() {
               <span className="font-medium text-gray-800">Opportunities</span>
             </div>
             <h1 className="mt-2 text-3xl font-bold text-gray-900">Opportunities</h1>
-            <p className="mt-1 text-gray-500">All RFP sessions and their current E1 pipeline progress.</p>
+            <p className="mt-1 text-gray-500">All RFP and RFI sessions with their pipeline progress.</p>
           </div>
           <a
             href="/e1/upload"
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            New RFP Session
+            New Session
           </a>
         </div>
 
@@ -138,12 +169,12 @@ export default function OpportunitiesPage() {
         {!loading && !error && opportunities.length === 0 && (
           <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800">No opportunities yet</h2>
-            <p className="mt-1 text-sm text-gray-500">Upload an RFP package to start your first session.</p>
+            <p className="mt-1 text-sm text-gray-500">Upload an RFP or RFI package to start your first session.</p>
             <a
               href="/e1/upload"
               className="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
-              Upload RFP Package
+              Upload Package
             </a>
           </div>
         )}
@@ -152,8 +183,10 @@ export default function OpportunitiesPage() {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             {opportunities.map(opportunity => {
               const id = opportunity.opportunity_id ?? "Unknown";
+              const mode = opportunity.mode ?? "rfp";
               const link = engineLink(opportunity);
               const completed = opportunity.engines_completed ?? [];
+              const statusClass = statusStyles[opportunity.status];
 
               return (
                 <div key={id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -166,9 +199,14 @@ export default function OpportunitiesPage() {
                         {opportunity.client_name || "No client name"}
                       </p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[opportunity.status] ?? "bg-gray-100 text-gray-700"}`}>
-                      {formatLabel(opportunity.status)}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase ${modeStyles[mode]}`}>
+                        {mode}
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClass ?? "bg-red-100 text-red-700"}`}>
+                        {formatLabel(opportunity.status)}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">

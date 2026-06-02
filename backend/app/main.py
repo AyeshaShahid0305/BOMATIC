@@ -9,12 +9,14 @@ from app.api.e2_routes import router as e2_router
 from app.api.e3_routes import router as e3_router
 from app.api.e4_routes import router as e4_router
 from app.api.e5_routes import router as e5_router
+from app.api.pipeline_routes import router as pipeline_router
+from app.api.auth_routes import router as auth_router
 from app.config import get_settings
 
 BOMATIC_API_KEY = get_settings().bomatic_api_key
 if not BOMATIC_API_KEY:
     raise RuntimeError("BOMATIC_API_KEY environment variable is not set. Set it in backend/.env before starting the server.")
-_EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc"}
+_EXCLUDED_PATHS = {"/docs", "/health", "/openapi.json", "/redoc", "/api/auth/login", "/api/auth/register"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -47,3 +49,5 @@ app.include_router(e2_router, prefix="/api")
 app.include_router(e3_router, prefix="/api")
 app.include_router(e4_router, prefix="/api")
 app.include_router(e5_router, prefix="/api")
+app.include_router(pipeline_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")

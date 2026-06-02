@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
+import ReviewBanner from "@/app/components/ReviewBanner";
 
 // ---------------------------------------------------------------------------
 // Shared primitives (same visual language as checkpoint1)
@@ -131,6 +132,42 @@ function Toast({ message, downloadUrl, onClose }) {
           )}
         </div>
         <button onClick={onClose} className="text-green-500 hover:text-green-700 text-lg leading-none shrink-0">✕</button>
+      </div>
+    </div>
+  );
+}
+
+function RevisionModal({ onClose, onSubmit, submitting }) {
+  const [notes, setNotes] = useState("");
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+        <h3 className="mb-1 text-base font-semibold text-gray-800">Request Revision</h3>
+        <p className="mb-4 text-sm text-gray-500">
+          Describe what needs to be corrected. The compliance matrix will be regenerated.
+        </p>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          rows={5}
+          placeholder="e.g. Control mapping for REQ-005 is incorrect. SAMA CSF should be prioritized over ISO 27001 for this sector."
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <div className="mt-4 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSubmit(notes)}
+            disabled={!notes.trim() || submitting}
+            className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+          >
+            {submitting ? "Submitting" : "Submit Revision Request"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -330,6 +367,11 @@ export default function Checkpoint2Page() {
   const [approving, setApproving]   = useState(false);
   const [checkpointComplete, setCheckpointComplete] = useState(false);
   const [toast, setToast]           = useState(null);
+  const [revisionCount, setRevisionCount] = useState(0);
+  const [revisionSubmitting, setRevisionSubmitting] = useState(false);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [reviewBlocked, setReviewBlocked] = useState(false);
+  const MAX_REVISIONS = 3;
   const [expandedRows, setExpandedRows] = useState({});
 
   const saveTimers = useRef({});
@@ -348,6 +390,15 @@ export default function Checkpoint2Page() {
         setGaps(data.gaps ?? {});
         setStats(data.stats ?? {});
         setLoading(false);
+        // Read revision count from pipeline state
+        return fetch(`/api/e1/${id}/state`);
+      })
+      .then(r => r.ok ? r.json() : null)
+      .then(stateData => {
+        if (stateData) {
+          const counts = stateData?.step_outputs?.revision_counts ?? {};
+          setRevisionCount(counts.cp2 ?? 0);
+        }
       })
       .catch(err => {
         setLoadError(err.message === "404" ? "404" : (err.message || "Failed to load matrix."));
@@ -414,6 +465,51 @@ export default function Checkpoint2Page() {
     }
   }
 
+  async function handleRevisionSubmit(notes) {
+    setRevisionSubmitting(true);
+    try {
+      const res = await fetch(`/api/e1/${id}/checkpoint2/revise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engineer_notes: notes }),
+      });
+
+      if (res.status === 409) {
+        const body = await res.json();
+        setShowRevisionModal(false);
+        setToast({ message: body.detail ?? "Maximum revisions reached.", downloadUrl: null });
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.detail ?? `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      setRevisionCount(data.revision_number);
+
+      // Refresh the matrix with new results
+      const matrixRes = await fetch(`/api/e1/${id}/matrix`);
+      if (matrixRes.ok) {
+        const matrixData = await matrixRes.json();
+        setRows(matrixData.matrix_rows ?? []);
+        setGaps(matrixData.gaps ?? {});
+        setStats(matrixData.stats ?? {});
+      }
+
+      setShowRevisionModal(false);
+      setToast({
+        message: `Revision ${data.revision_number} of ${MAX_REVISIONS} complete. Matrix updated.`,
+        downloadUrl: null,
+      });
+    } catch (err) {
+      setShowRevisionModal(false);
+      setToast({ message: `Revision failed: ${err.message}`, downloadUrl: null });
+    } finally {
+      setRevisionSubmitting(false);
+    }
+  }
+
   // Loading
   if (loading) {
     return (
@@ -474,6 +570,13 @@ export default function Checkpoint2Page() {
       </div>
 
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+
+        {/* Automated review banner */}
+        <ReviewBanner
+          opportunityId={id}
+          checkpoint="cp2"
+          onReady={(canApprove) => setReviewBlocked(!canApprove)}
+        />
 
         {/* Stats bar */}
         <SectionCard title="Summary">
@@ -555,16 +658,40 @@ export default function Checkpoint2Page() {
           >
             ← Back to Checkpoint 1
           </a>
-          <button
-            onClick={handleApprove}
-            disabled={approving || checkpointComplete}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {approving && <Spinner small />}
-            {checkpointComplete ? "Approved" : approving ? "Generating…" : "Approve & Generate Excel"}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end gap-1">
+              {revisionCount > 0 && (
+                <span className="text-xs text-gray-400">
+                  Revision {revisionCount} of {MAX_REVISIONS} used
+                </span>
+              )}
+              <button
+                onClick={() => setShowRevisionModal(true)}
+                disabled={checkpointComplete || revisionCount >= MAX_REVISIONS}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {revisionCount >= MAX_REVISIONS ? "Max Revisions Reached" : "Request Revision"}
+              </button>
+            </div>
+            <button
+              onClick={handleApprove}
+              disabled={approving || checkpointComplete || reviewBlocked}
+              className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {approving && <Spinner small />}
+              {checkpointComplete ? "Approved" : approving ? "Generating" : "Approve & Generate Excel"}
+            </button>
+          </div>
         </div>
       </div>
+
+      {showRevisionModal && (
+        <RevisionModal
+          onClose={() => setShowRevisionModal(false)}
+          onSubmit={handleRevisionSubmit}
+          submitting={revisionSubmitting}
+        />
+      )}
 
       {/* Toast */}
       {toast && (

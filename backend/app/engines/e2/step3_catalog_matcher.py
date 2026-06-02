@@ -49,8 +49,16 @@ def _score(rfp_item: RFPLineItem, product: dict) -> tuple[float, str]:
 def match_catalog(
     rfp_items: list[RFPLineItem],
     catalog_path: Path = _CATALOG_PATH,
+    vendor_list: list[str] | None = None,
 ) -> list[CatalogMatch]:
     catalog = _load_catalog() if catalog_path == _CATALOG_PATH else json.loads(catalog_path.read_text(encoding="utf-8"))
+    if vendor_list:
+        allowed_vendors = {vendor.lower() for vendor in vendor_list}
+        catalog = [
+            product
+            for product in catalog
+            if product.get("vendor", "").lower() in allowed_vendors
+        ]
     results: list[CatalogMatch] = []
 
     for rfp_item in rfp_items:

@@ -96,6 +96,71 @@ def _first_empty_row(ws, from_row: int) -> int:
     return ws.max_row + 1
 
 
+def write_distributor_export(
+    summary: PricingSummary,
+    template_path: Path,
+) -> Path:
+    """
+    Write a clean distributor-facing Excel file containing only matched items.
+
+    Columns: SKU | Description | Quantity | Unit Price (USD) | Total Price (USD)
+    Includes a bold totals row. Unmatched items are excluded.
+    Returns the path to the generated file.
+    """
+    _OUTPUT_DIR.mkdir(exist_ok=True)
+
+    stem = Path(template_path).stem
+    output_path = _OUTPUT_DIR / f"{stem}_Distributor_Export.xlsx"
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Distributor Order"
+
+    # Header row
+    headers = ["SKU", "Description", "Quantity", "Unit Price (USD)", "Total Price (USD)"]
+    for col, title in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=title)
+        cell.font = _BOLD
+
+    # Data rows - matched items only
+    row = 2
+    total_qty = 0.0
+    total_price = 0.0
+
+    for m in summary.matched_items:
+        qty = m.rfp_item.quantity if m.rfp_item.quantity is not None else 1.0
+        line_total = round(qty * m.unit_price, 2)
+        total_qty += qty
+        total_price += line_total
+
+        ws.cell(row=row, column=1, value=m.sku)
+        ws.cell(row=row, column=2, value=m.rfp_item.description)
+        ws.cell(row=row, column=3, value=qty)
+        ws.cell(row=row, column=4, value=round(m.unit_price, 2))
+        ws.cell(row=row, column=5, value=line_total)
+        row += 1
+
+    # Totals row
+    totals_cells = [
+        (row, 1, ""),
+        (row, 2, "TOTAL"),
+        (row, 3, total_qty),
+        (row, 4, ""),
+        (row, 5, round(total_price, 2)),
+    ]
+    for r, c, v in totals_cells:
+        cell = ws.cell(row=r, column=c, value=v)
+        cell.font = _BOLD
+
+    # Auto-fit column widths (best-effort)
+    col_widths = [16, 45, 10, 18, 18]
+    for col, width in enumerate(col_widths, start=1):
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = width
+
+    wb.save(output_path)
+    return output_path
+
+
 if __name__ == "__main__":
     from app.engines.e2.models import CatalogMatch, RFPLineItem
     from app.engines.e2.step4_gap_analyzer import analyze_gaps

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import ReviewBanner from "@/app/components/ReviewBanner";
 
 // ---------------------------------------------------------------------------
 // Small reusable pieces
@@ -279,13 +280,20 @@ export default function Checkpoint1Page() {
   const [showModal, setShowModal] = useState(false);
   const [revisionSubmitting, setRevisionSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [revisionCount, setRevisionCount] = useState(0);
+  const [reviewBlocked, setReviewBlocked] = useState(false);
+  const MAX_REVISIONS = 3;
 
   const dismissToast = useCallback(() => setToast(null), []);
 
   useEffect(() => {
     fetch(`/api/e1/${id}/state`)
       .then(r => r.ok ? r.json() : r.json().then(b => Promise.reject(b.detail ?? "Failed to load state")))
-      .then(setState)
+      .then(data => {
+        setState(data);
+        const counts = data?.step_outputs?.revision_counts ?? {};
+        setRevisionCount(counts.cp1 ?? 0);
+      })
       .catch(err => setLoadError(typeof err === "string" ? err : "Failed to load pipeline state."));
   }, [id]);
 
@@ -304,9 +312,41 @@ export default function Checkpoint1Page() {
     }
   }
 
-  function handleRevisionSubmit() {
-    setShowModal(false);
-    setToast("Revision re-run is not yet available. Please contact support.");
+  async function handleRevisionSubmit(notes) {
+    setRevisionSubmitting(true);
+    try {
+      const res = await fetch(`/api/e1/${id}/checkpoint1/revise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engineer_notes: notes }),
+      });
+
+      if (res.status === 409) {
+        const body = await res.json();
+        setShowModal(false);
+        setToast(body.detail ?? "Maximum revisions reached.");
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.detail ?? `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      setRevisionCount(data.revision_number);
+
+      // Refresh the full pipeline state so the requirements/flags sections update
+      const stateRes = await fetch(`/api/e1/${id}/state`);
+      if (stateRes.ok) setState(await stateRes.json());
+
+      setShowModal(false);
+      setToast(`Revision ${data.revision_number} of ${MAX_REVISIONS} complete. Results updated.`);
+    } catch (err) {
+      setShowModal(false);
+      setToast(`Revision failed: ${err.message}`);
+    } finally {
+      setRevisionSubmitting(false);
+    }
   }
 
   // Loading
@@ -382,6 +422,13 @@ export default function Checkpoint1Page() {
       {/* Main content */}
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
 
+        {/* Automated review banner */}
+        <ReviewBanner
+          opportunityId={id}
+          checkpoint="cp1"
+          onReady={(canApprove) => setReviewBlocked(!canApprove)}
+        />
+
         {/* Section 1 */}
         <SectionCard title="Section A — Classified Files">
           <ClassifiedFilesSection files={outputs["1"]} />
@@ -414,16 +461,23 @@ export default function Checkpoint1Page() {
             ← Back
           </a>
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowModal(true)}
-              disabled={step >= 11}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Request Revision
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              {revisionCount > 0 && (
+                <span className="text-xs text-gray-400">
+                  Revision {revisionCount} of {MAX_REVISIONS} used
+                </span>
+              )}
+              <button
+                onClick={() => setShowModal(true)}
+                disabled={step >= 11 || revisionCount >= MAX_REVISIONS}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {revisionCount >= MAX_REVISIONS ? "Max Revisions Reached" : "Request Revision"}
+              </button>
+            </div>
             <button
               onClick={handleApprove}
-              disabled={approving || step >= 11}
+              disabled={approving || step >= 11 || reviewBlocked}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {approving && <Spinner />}

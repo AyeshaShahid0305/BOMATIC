@@ -5,9 +5,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
+from app.api.reviewer import run_e3_reviewer
+from app.config import get_settings
 from app.db import get_db
 from app.engines.e2.step1_rfp_extractor import extract_rfp_requirements
 from app.engines.e2.step3_catalog_matcher import match_catalog
@@ -86,6 +89,11 @@ async def generate_proposal(
             pipeline_state.step_outputs = outputs
             pipeline_state.current_step = max(pipeline_state.current_step, 23)
             opportunity.status = 'e3_complete'
+            # Run automated reviewer before engineer sees E3 checkpoint
+            settings = get_settings()
+            review_result = run_e3_reviewer(outputs['e3'], settings.anthropic_api_key)
+            outputs['review_e3'] = review_result
+            pipeline_state.step_outputs = outputs
             flag_modified(pipeline_state, 'step_outputs')
             db.commit()
         return result
@@ -167,4 +175,101 @@ def approve_e3_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
         "status": "complete",
         "next_url": f"/opportunities",
         "message": "Proposal approved. Opportunity is complete.",
+    }
+
+
+@router.get("/{opportunity_id}/review")
+def get_e3_review(opportunity_id: str, db: Session = Depends(get_db)):
+    """Return the stored E3 review result."""
+    _, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
+    result = (pipeline.step_outputs or {}).get("review_e3")
+    if not result:
+        raise HTTPException(status_code=404, detail="E3 review has not run yet.")
+    return result
+
+
+@router.post("/{opportunity_id}/review/rerun")
+def rerun_e3_review(opportunity_id: str, db: Session = Depends(get_db)):
+    """Re-trigger the E3 reviewer without re-running the full engine."""
+    from app.config import get_settings
+    settings = get_settings()
+    _, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
+    e3_data = (pipeline.step_outputs or {}).get("e3")
+    if not e3_data:
+        raise HTTPException(status_code=404, detail="E3 has not been run yet.")
+    review_result = run_e3_reviewer(e3_data, settings.anthropic_api_key)
+    pipeline.step_outputs = {**pipeline.step_outputs, "review_e3": review_result}
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+    return review_result
+
+
+class E3RevisionRequest(BaseModel):
+    engineer_notes: str = ""
+
+
+def _get_e3_revision_count(pipeline: PipelineState) -> int:
+    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    return counts.get("e3", 0)
+
+
+def _increment_e3_revision_count(pipeline: PipelineState) -> int:
+    outputs = dict(pipeline.step_outputs or {})
+    counts = dict(outputs.get("revision_counts", {}))
+    counts["e3"] = counts.get("e3", 0) + 1
+    outputs["revision_counts"] = counts
+    pipeline.step_outputs = outputs
+    return counts["e3"]
+
+
+@router.post("/{opportunity_id}/checkpoint/revise")
+def revise_e3_checkpoint(
+    opportunity_id: str,
+    body: E3RevisionRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Record an E3 revision request. Max 3 revisions.
+    Engineer must re-submit via the Proposal Generator to apply changes.
+    """
+    MAX_REVISIONS = 3
+
+    opportunity, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
+
+    if pipeline.current_step < 23:
+        raise HTTPException(
+            status_code=409,
+            detail="E3 not yet complete. Generate the proposal first.",
+        )
+    if opportunity.status == "complete":
+        raise HTTPException(
+            status_code=409,
+            detail="E3 checkpoint already approved. Revisions are no longer possible.",
+        )
+
+    current_count = _get_e3_revision_count(pipeline)
+    if current_count >= MAX_REVISIONS:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Maximum revisions ({MAX_REVISIONS}) reached for E3. "
+                   "Edit output files manually before approving.",
+        )
+
+    new_count = _increment_e3_revision_count(pipeline)
+
+    outputs = dict(pipeline.step_outputs)
+    revision_notes = dict(outputs.get("revision_notes", {}))
+    revision_notes[f"e3_revision_{new_count}"] = body.engineer_notes
+    outputs["revision_notes"] = revision_notes
+    pipeline.step_outputs = outputs
+
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+
+    return {
+        "opportunity_id": opportunity_id,
+        "revision_number": new_count,
+        "revisions_remaining": MAX_REVISIONS - new_count,
+        "message": "Revision recorded. Re-run E3 via the Proposal Generator to apply changes.",
+        "rerun_url": f"/e3?session_id={opportunity_id}",
     }

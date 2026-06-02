@@ -3,8 +3,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.api.reviewer import run_e4_reviewer
+from app.config import get_settings
 from app.db import get_db
 from app.engines.e4 import run_e4_pipeline
 from app.models.opportunity import Opportunity
@@ -49,6 +52,11 @@ async def generate_rfi(
                 pipeline_state.step_outputs = outputs
                 pipeline_state.current_step = max(pipeline_state.current_step, 11)
                 opportunity.status = 'e4_complete'
+                # Run automated reviewer before engineer sees E4 checkpoint
+                settings = get_settings()
+                review_result = run_e4_reviewer(outputs['e4'], settings.anthropic_api_key)
+                outputs['review_e4'] = review_result
+                pipeline_state.step_outputs = outputs
                 flag_modified(pipeline_state, 'step_outputs')
                 db.commit()
     return result
@@ -128,4 +136,101 @@ def approve_e4_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
         "status": "e4_approved",
         "next_url": f"/e5?session_id={opportunity_id}",
         "message": "E4 approved. Proceed to E5 design generation.",
+    }
+
+
+@router.get("/{opportunity_id}/review")
+def get_e4_review(opportunity_id: str, db: Session = Depends(get_db)):
+    """Return the stored E4 review result."""
+    _, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+    result = (pipeline.step_outputs or {}).get("review_e4")
+    if not result:
+        raise HTTPException(status_code=404, detail="E4 review has not run yet.")
+    return result
+
+
+@router.post("/{opportunity_id}/review/rerun")
+def rerun_e4_review(opportunity_id: str, db: Session = Depends(get_db)):
+    """Re-trigger the E4 reviewer without re-running the full engine."""
+    from app.config import get_settings
+    settings = get_settings()
+    _, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+    e4_data = (pipeline.step_outputs or {}).get("e4")
+    if not e4_data:
+        raise HTTPException(status_code=404, detail="E4 has not been run yet.")
+    review_result = run_e4_reviewer(e4_data, settings.anthropic_api_key)
+    pipeline.step_outputs = {**pipeline.step_outputs, "review_e4": review_result}
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+    return review_result
+
+
+class E4RevisionRequest(BaseModel):
+    engineer_notes: str = ""
+
+
+def _get_e4_revision_count(pipeline: PipelineState) -> int:
+    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    return counts.get("e4", 0)
+
+
+def _increment_e4_revision_count(pipeline: PipelineState) -> int:
+    outputs = dict(pipeline.step_outputs or {})
+    counts = dict(outputs.get("revision_counts", {}))
+    counts["e4"] = counts.get("e4", 0) + 1
+    outputs["revision_counts"] = counts
+    pipeline.step_outputs = outputs
+    return counts["e4"]
+
+
+@router.post("/{opportunity_id}/checkpoint/revise")
+def revise_e4_checkpoint(
+    opportunity_id: str,
+    body: E4RevisionRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Record an E4 revision request. Max 3 revisions.
+    Engineer must re-submit via the RFI Generator to apply changes.
+    """
+    MAX_REVISIONS = 3
+
+    opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+
+    if pipeline.current_step < 11:
+        raise HTTPException(
+            status_code=409,
+            detail="E4 not yet complete. Generate the RFI questionnaire first.",
+        )
+    if opportunity.status == "e4_approved":
+        raise HTTPException(
+            status_code=409,
+            detail="E4 checkpoint already approved. Revisions are no longer possible.",
+        )
+
+    current_count = _get_e4_revision_count(pipeline)
+    if current_count >= MAX_REVISIONS:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Maximum revisions ({MAX_REVISIONS}) reached for E4. "
+                   "Edit output files manually before approving.",
+        )
+
+    new_count = _increment_e4_revision_count(pipeline)
+
+    outputs = dict(pipeline.step_outputs)
+    revision_notes = dict(outputs.get("revision_notes", {}))
+    revision_notes[f"e4_revision_{new_count}"] = body.engineer_notes
+    outputs["revision_notes"] = revision_notes
+    pipeline.step_outputs = outputs
+
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+
+    return {
+        "opportunity_id": opportunity_id,
+        "revision_number": new_count,
+        "revisions_remaining": MAX_REVISIONS - new_count,
+        "message": "Revision recorded. Re-run E4 via the RFI Generator to apply changes.",
+        "rerun_url": f"/e4?session_id={opportunity_id}",
     }

@@ -11,7 +11,7 @@ type ReviewResult = {
 
 type ReviewBannerProps = {
   opportunityId: string;
-  checkpoint: "cp1" | "cp2";
+  checkpoint: "cp1" | "cp2" | "e2" | "e3" | "e4" | "e5";
   /** Called with true when errors=[] (approve button should enable), false otherwise */
   onReady: (canApprove: boolean) => void;
 };
@@ -24,9 +24,11 @@ export default function ReviewBanner({ opportunityId, checkpoint, onReady }: Rev
   async function fetchReview() {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/e1/${encodeURIComponent(opportunityId)}/review/${checkpoint}`
-      );
+      const engine = ["cp1", "cp2"].includes(checkpoint) ? "e1" : checkpoint;
+      const reviewPath = ["cp1", "cp2"].includes(checkpoint)
+        ? `/api/e1/${encodeURIComponent(opportunityId)}/review/${checkpoint}`
+        : `/api/${engine}/${encodeURIComponent(opportunityId)}/review`;
+      const res = await fetch(reviewPath);
       if (res.status === 404) {
         // Reviewer hasn't run yet - treat as passed with no issues.
         onReady(true);
@@ -47,10 +49,10 @@ export default function ReviewBanner({ opportunityId, checkpoint, onReady }: Rev
   async function handleRerun() {
     setRerunning(true);
     try {
-      const res = await fetch(
-        `/api/e1/${encodeURIComponent(opportunityId)}/review/${checkpoint}/rerun`,
-        { method: "POST" }
-      );
+      const rerunPath = ["cp1", "cp2"].includes(checkpoint)
+        ? `/api/e1/${encodeURIComponent(opportunityId)}/review/${checkpoint}/rerun`
+        : `/api/${checkpoint}/${encodeURIComponent(opportunityId)}/review/rerun`;
+      const res = await fetch(rerunPath, { method: "POST" });
       if (res.ok) {
         const data: ReviewResult = await res.json();
         setReview(data);

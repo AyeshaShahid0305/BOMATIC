@@ -212,3 +212,306 @@ Return format: ["Warning one.", "Warning two."] or []"""
         "errors": errors,
         "checked_at": _now_iso(),
     }
+
+
+# ---------------------------------------------------------------------------
+# E2 Reviewer - checks BoM generation output
+# ---------------------------------------------------------------------------
+
+def run_e2_reviewer(e2_data: dict, api_key: str) -> dict:
+    """
+    Quality gate for E2 (Bill of Materials).
+    Checks: matched_count, unmatched_count, low_confidence_count, totals.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    matched = e2_data.get("matched_count", 0)
+    unmatched = e2_data.get("unmatched_count", 0)
+    low_conf = e2_data.get("low_confidence_count", 0)
+    total = e2_data.get("total", 0)
+    vendor_list = e2_data.get("vendor_list", [])
+    req_count = e2_data.get("requirements_baseline_count", 0)
+
+    # Error: nothing was matched at all
+    if matched == 0 and unmatched == 0:
+        errors.append(
+            "No items were processed. The BoQ template may be empty or in an "
+            "unsupported format."
+        )
+
+    # Error: total is zero with matched items (pricing data missing)
+    if matched > 0 and total == 0:
+        errors.append(
+            "Matched items found but total price is zero. "
+            "Catalog pricing data may be missing - check the catalog."
+        )
+
+    # Warning: high unmatched rate
+    total_items = matched + unmatched
+    if total_items > 0 and unmatched / total_items > 0.3:
+        pct = int(unmatched / total_items * 100)
+        warnings.append(
+            f"{pct}% of items ({unmatched}/{total_items}) could not be matched to the "
+            "catalog. Review NEEDS REVIEW rows in the BoM workbook before approving."
+        )
+
+    # Warning: low-confidence matches
+    if low_conf > 0:
+        warnings.append(
+            f"{low_conf} item(s) matched with low confidence. "
+            "Verify SKU selections in the BoM workbook."
+        )
+
+    # Warning: no vendors identified from E1
+    if not vendor_list:
+        warnings.append(
+            "No vendor list was passed from E1. Catalog matching used all vendors - "
+            "results may be less accurate."
+        )
+
+    # AI qualitative check
+    if not errors:
+        prompt = f"""You are reviewing an automated Bill of Materials generation result.
+Return ONLY a JSON array of warning strings (or [] if everything looks fine).
+Do not explain or add prose.
+
+BoM summary:
+- Matched items: {matched}
+- Unmatched items: {unmatched}
+- Low confidence matches: {low_conf}
+- Total price: {e2_data.get('currency', 'USD')} {total:,.2f}
+- Vendors: {vendor_list}
+- Requirements processed: {req_count}
+
+Check for: suspiciously low total price for the number of items, vendor mix that
+seems inconsistent (e.g. Cisco and Fortinet mixed without explanation), or any
+pattern an engineer should know about before approving.
+
+Return format: ["Warning one.", "Warning two."] or []"""
+        warnings.extend(_ai_qualitative_check(prompt, api_key))
+
+    return {
+        "passed": len(errors) == 0,
+        "warnings": warnings,
+        "errors": errors,
+        "checked_at": _now_iso(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# E3 Reviewer - checks proposal generation output
+# ---------------------------------------------------------------------------
+
+def run_e3_reviewer(e3_data: dict, api_key: str) -> dict:
+    """
+    Quality gate for E3 (Technical Proposal).
+    Checks: section_count, output_file presence.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    section_count = e3_data.get("section_count", 0)
+    output_file = e3_data.get("output_file", "")
+    pdf_file = e3_data.get("pdf_file", "")
+    project_name = e3_data.get("project_name", "")
+
+    # Error: no output file
+    if not output_file:
+        errors.append(
+            "No proposal document was generated. Re-run E3 generation."
+        )
+
+    # Error: zero sections
+    if section_count == 0:
+        errors.append(
+            "The proposal has zero sections. The template selector may have failed."
+        )
+
+    # Warning: very few sections
+    if 0 < section_count < 5:
+        warnings.append(
+            f"Only {section_count} section(s) generated. A typical proposal has 8-15 "
+            "sections - verify the template was applied correctly."
+        )
+
+    # Warning: no PDF
+    if output_file and not pdf_file:
+        warnings.append(
+            "PDF conversion was skipped (LibreOffice not found). "
+            "Install LibreOffice to generate submission.pdf."
+        )
+
+    # Warning: generic project name
+    if project_name in ("", "Untitled", "RFP Project"):
+        warnings.append(
+            "Project name is generic or missing. Update the opportunity's project name "
+            "before submitting the proposal."
+        )
+
+    # AI qualitative check
+    if not errors:
+        prompt = f"""You are reviewing an automated technical proposal generation result.
+Return ONLY a JSON array of warning strings (or [] if everything looks fine).
+Do not explain or add prose.
+
+Proposal summary:
+- Project name: {project_name}
+- Sections generated: {section_count}
+- DOCX produced: {'yes' if output_file else 'no'}
+- PDF produced: {'yes' if pdf_file else 'no'}
+
+Check for: anything an engineer should verify before sending this proposal to a client.
+
+Return format: ["Warning one.", "Warning two."] or []"""
+        warnings.extend(_ai_qualitative_check(prompt, api_key))
+
+    return {
+        "passed": len(errors) == 0,
+        "warnings": warnings,
+        "errors": errors,
+        "checked_at": _now_iso(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# E4 Reviewer - checks RFI questionnaire output
+# ---------------------------------------------------------------------------
+
+def run_e4_reviewer(e4_data: dict, api_key: str) -> dict:
+    """
+    Quality gate for E4 (RFI Questionnaire).
+    Checks: total_questions, categories, must_have_count.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    total = e4_data.get("total_questions", 0)
+    categories = e4_data.get("categories", [])
+    must_have = e4_data.get("must_have_count", 0)
+    nice_to_have = e4_data.get("nice_to_have_count", 0)
+    output_file = e4_data.get("output_file", "")
+
+    # Error: no questions generated
+    if total == 0:
+        errors.append(
+            "No questions were generated. The E4 engine may have failed - re-run generation."
+        )
+
+    # Error: no output file
+    if not output_file:
+        errors.append(
+            "No questionnaire file was produced. Re-run E4 generation."
+        )
+
+    # Warning: no must-have questions
+    if total > 0 and must_have == 0:
+        warnings.append(
+            "No must-have questions were generated. Every RFI should have at least "
+            "some mandatory items - verify the question template."
+        )
+
+    # Warning: very few questions
+    if 0 < total < 10:
+        warnings.append(
+            f"Only {total} question(s) generated. A typical RFI questionnaire has "
+            "20-60 questions."
+        )
+
+    # Warning: no categories
+    if not categories:
+        warnings.append(
+            "No question categories were identified. The questionnaire may lack structure."
+        )
+
+    # AI qualitative check
+    if not errors:
+        prompt = f"""You are reviewing an automated RFI questionnaire generation result.
+Return ONLY a JSON array of warning strings (or [] if everything looks fine).
+Do not explain or add prose.
+
+Questionnaire summary:
+- Total questions: {total}
+- Must-have: {must_have}
+- Nice-to-have: {nice_to_have}
+- Categories: {categories}
+
+Check for: imbalanced must-have vs nice-to-have ratio, missing categories typical
+for network infrastructure RFIs, or any issue the engineer should know before
+sending this questionnaire to the client.
+
+Return format: ["Warning one.", "Warning two."] or []"""
+        warnings.extend(_ai_qualitative_check(prompt, api_key))
+
+    return {
+        "passed": len(errors) == 0,
+        "warnings": warnings,
+        "errors": errors,
+        "checked_at": _now_iso(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# E5 Reviewer - checks HLD/LLD design output
+# ---------------------------------------------------------------------------
+
+def run_e5_reviewer(e5_data: dict, api_key: str) -> dict:
+    """
+    Quality gate for E5 (HLD/LLD Design).
+    Checks: total_sections, output_file presence.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    total_sections = e5_data.get("total_sections", 0)
+    output_file = e5_data.get("output_file", "")
+    project_name = e5_data.get("project_name", "")
+
+    # Error: no output file
+    if not output_file:
+        errors.append(
+            "No design document was generated. Re-run E5 generation."
+        )
+
+    # Error: zero sections
+    if total_sections == 0:
+        errors.append(
+            "The design document has zero sections. E5 generation may have failed."
+        )
+
+    # Warning: very few sections
+    if 0 < total_sections < 8:
+        warnings.append(
+            f"Only {total_sections} section(s) generated. A typical HLD/LLD document "
+            "has 12-21 sections - verify the template was applied correctly."
+        )
+
+    # Warning: generic project name
+    if project_name in ("", "Untitled", "RFI Project"):
+        warnings.append(
+            "Project name is generic or missing. Update before submitting the design."
+        )
+
+    # AI qualitative check
+    if not errors:
+        prompt = f"""You are reviewing an automated HLD/LLD design document generation result.
+Return ONLY a JSON array of warning strings (or [] if everything looks fine).
+Do not explain or add prose.
+
+Design summary:
+- Project name: {project_name}
+- Total sections: {total_sections}
+- Document produced: {'yes' if output_file else 'no'}
+
+Check for: anything an engineer should verify before approving this design document
+and passing the component list to the BoM engine.
+
+Return format: ["Warning one.", "Warning two."] or []"""
+        warnings.extend(_ai_qualitative_check(prompt, api_key))
+
+    return {
+        "passed": len(errors) == 0,
+        "warnings": warnings,
+        "errors": errors,
+        "checked_at": _now_iso(),
+    }

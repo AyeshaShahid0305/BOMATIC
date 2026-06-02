@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import DownloadButton from "@/app/components/DownloadButton";
+import ReviewBanner from "@/app/components/ReviewBanner";
+import RevisionModal from "@/app/components/RevisionModal";
 
 type PackageState = {
   opportunity_id: string;
@@ -17,8 +19,13 @@ export default function E3ReviewPage() {
   const [e3Data, setE3Data] = useState<{section_count: number; ai_generated_count?: number; gbb_tier?: string; total_price?: number} | null>(null);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [reviewBlocked, setReviewBlocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revisionCount, setRevisionCount] = useState(0);
+  const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [revisionSubmitting, setRevisionSubmitting] = useState(false);
+  const MAX_REVISIONS = 3;
 
   useEffect(() => {
     fetch(`/api/v1/rfp/packages/${encodeURIComponent(id)}`)
@@ -43,6 +50,47 @@ export default function E3ReviewPage() {
       })
       .catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    fetch(`/api/e1/${encodeURIComponent(id)}/state`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.step_outputs?.revision_counts?.e3 != null) {
+          setRevisionCount(data.step_outputs.revision_counts.e3);
+        }
+      })
+      .catch(() => {});
+  }, [id]);
+
+  async function handleRevisionSubmit(notes: string) {
+    setRevisionSubmitting(true);
+    try {
+      const res = await fetch(`/api/e3/${encodeURIComponent(id)}/checkpoint/revise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engineer_notes: notes }),
+      });
+      if (res.status === 409) {
+        const b = await res.json();
+        setShowRevisionModal(false);
+        alert(b.detail ?? "Maximum revisions reached.");
+        return;
+      }
+      if (!res.ok) {
+        const b = await res.json();
+        throw new Error(b.detail ?? `Error ${res.status}`);
+      }
+      const data = await res.json();
+      setRevisionCount(data.revision_number);
+      setShowRevisionModal(false);
+      alert(`Revision ${data.revision_number} of ${MAX_REVISIONS} recorded. ${data.message}`);
+    } catch (err) {
+      setShowRevisionModal(false);
+      alert(err instanceof Error ? err.message : "Revision failed.");
+    } finally {
+      setRevisionSubmitting(false);
+    }
+  }
 
   const e3Complete = (state?.pipeline_step ?? 0) >= 22;
 
@@ -89,6 +137,14 @@ export default function E3ReviewPage() {
         </div>
 
         {e3Complete && (
+          <ReviewBanner
+            opportunityId={id}
+            checkpoint="e3"
+            onReady={(canApprove) => setReviewBlocked(!canApprove)}
+          />
+        )}
+
+        {e3Complete && (
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">
               Downloads
@@ -131,24 +187,48 @@ export default function E3ReviewPage() {
               {approved ? (
                 <span className="rounded-full bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-700"> Approved  Complete</span>
               ) : (
-                <button
-                  onClick={async () => {
-                    setApproving(true);
-                    try {
-                      const res = await fetch(`/api/e3/${encodeURIComponent(id)}/checkpoint/approve`, { method: "POST" });
-                      if (res.ok) setApproved(true);
-                    } finally { setApproving(false); }
-                  }}
-                  disabled={approving}
-                  className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-                >
-                  {approving ? "Approving" : "Approve & Mark Complete"}
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end gap-1">
+                    {revisionCount > 0 && (
+                      <span className="text-xs text-gray-400">
+                        Revision {revisionCount} of {MAX_REVISIONS} used
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setShowRevisionModal(true)}
+                      disabled={approved || revisionCount >= MAX_REVISIONS}
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {revisionCount >= MAX_REVISIONS ? "Max Revisions Reached" : "Request Revision"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setApproving(true);
+                      try {
+                        const res = await fetch(`/api/e3/${encodeURIComponent(id)}/checkpoint/approve`, { method: "POST" });
+                        if (res.ok) setApproved(true);
+                      } finally { setApproving(false); }
+                    }}
+                    disabled={approving || reviewBlocked}
+                    className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {approving ? "Approving" : "Approve & Mark Complete"}
+                  </button>
+                </div>
               )}
             </div>
           </div>
         )}
       </div>
+      {showRevisionModal && (
+        <RevisionModal
+          engineLabel="E3"
+          onClose={() => setShowRevisionModal(false)}
+          onSubmit={handleRevisionSubmit}
+          submitting={revisionSubmitting}
+        />
+      )}
     </main>
   );
 }

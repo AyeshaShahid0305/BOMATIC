@@ -1,0 +1,14 @@
+{
+  "rates": {
+    "SA": {"rate": 0.15, "name": "Saudi Arabia VAT"},
+    "AE": {"rate": 0.05, "name": "UAE VAT"},
+    "EG": {"rate": 0.14, "name": "Egypt VAT"},
+    "KW": {"rate": 0.0, "name": "Kuwait (no VAT)"},
+    "QA": {"rate": 0.0, "name": "Qatar (no VAT)"},
+    "BH": {"rate": 0.10, "name": "Bahrain VAT"},
+    "OM": {"rate": 0.05, "name": "Oman VAT"},
+    "GB": {"rate": 0.20, "name": "UK VAT"},
+    "DE": {"rate": 0.19, "name": "Germany VAT"},
+    "US": {"rate": 0.0, "name": "USA (no federal VAT)"}
+  }
+}

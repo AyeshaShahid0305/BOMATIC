@@ -1,0 +1,19 @@
+{
+  "target_currency": "SAR",
+  "vendor_discount_pct": 0.30,
+  "inhouse_margin_pct": 0.10,
+  "overhead_components": {
+    "freight": 0.02,
+    "customs": 0.05,
+    "insurance": 0.005,
+    "warehousing": 0.01,
+    "handling": 0.005,
+    "finance": 0.005,
+    "contingency": 0.005
+  },
+  "selling_mode": "margin",
+  "selling_pct": 0.25,
+  "embed_discounts": [],
+  "revenue_share_pct": 0.05,
+  "vat_country": "SA"
+}

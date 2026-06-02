@@ -23,8 +23,26 @@ def write_output(
     summary: PricingSummary,
     template_path: Path,
     detection: BoQDetectionResult,
+    cost_stack_result: dict | None = None,
 ) -> str:
     _OUTPUT_DIR.mkdir(exist_ok=True)
+    has_cost_stack = bool(cost_stack_result and cost_stack_result.get("line_items"))
+    currency = (cost_stack_result or {}).get("summary", {}).get("currency", "SAR") if has_cost_stack else "SAR"
+
+    header_cols = _HEADER_COLS.copy()
+    if has_cost_stack:
+        header_cols += [
+            f"List ({currency})",
+            f"After Discount ({currency})",
+            f"After Margin ({currency})",
+            f"Overhead ({currency})",
+            f"Cost+OH ({currency})",
+            f"Sell Price ({currency})",
+            f"Extended Sell ({currency})",
+            f"VAT ({currency})",
+            f"Total incl. VAT ({currency})",
+        ]
+
     stem = Path(template_path).stem
     output_path = _OUTPUT_DIR / f"{stem}_BOMATIC_filled.xlsx"
 
@@ -35,12 +53,17 @@ def write_output(
     header_row = detection.header_row_index + 1
 
     # Write our column headers over the template's original header row
-    for col, title in enumerate(_HEADER_COLS, start=1):
+    for col, title in enumerate(header_cols, start=1):
         cell = ws.cell(row=header_row, column=col, value=title)
         cell.font = _BOLD
 
     # Find the first empty data row after the header
     row = _first_empty_row(ws, header_row + 1)
+
+    cs_by_sku: dict[str, dict] = {}
+    if has_cost_stack:
+        for item in cost_stack_result["line_items"]:
+            cs_by_sku[item["sku"]] = item
 
     # --- Matched items ---
     for m in summary.matched_items:
@@ -52,6 +75,26 @@ def write_output(
             start=1,
         ):
             ws.cell(row=row, column=col, value=val)
+
+        # Cost stack columns
+        if has_cost_stack and m.sku in cs_by_sku:
+            cs = cs_by_sku[m.sku]
+            col = 9
+            for val in [
+                cs["cs001_line_list_local"],
+                cs["cs002_after_vendor_discount"],
+                cs["cs003_after_inhouse_margin"],
+                cs["cs004_overhead"],
+                cs["cs005_cost_with_overhead"],
+                cs["cs006_selling_price"],
+                cs["cs007_extended_sell"],
+                cs["cs009_vat"],
+                cs["line_total_with_vat"],
+            ]:
+                cell = ws.cell(row=row, column=col, value=val)
+                cell.alignment = _RIGHT
+                col += 1
+
         row += 1
 
     row += 1  # blank separator
@@ -83,6 +126,27 @@ def write_output(
         value_cell.font = _BOLD
         value_cell.alignment = _RIGHT
         row += 1
+
+    if has_cost_stack:
+        cs_summary = cost_stack_result["summary"]
+        row += 1
+        ws.cell(row=row, column=7, value=f" Cost Stack Summary ({cs_summary['currency']}) ").font = _BOLD
+        row += 1
+        for label, value in [
+            (f"Total List ({cs_summary['currency']})", cs_summary["total_list_local"]),
+            ("Total Cost (with OH)", cs_summary["total_cost"]),
+            ("Total Sell Price", cs_summary["total_sell"]),
+            (f"VAT ({cs_summary['vat_rate']:.0%})", cs_summary["total_vat"]),
+            ("Total incl. VAT", cs_summary["total_with_vat"]),
+            (f"STCS Sale ({cs_summary['vat_country']})", cs_summary["cs008_stcs_sale_total"]),
+        ]:
+            lc = ws.cell(row=row, column=7, value=label)
+            lc.font = _BOLD
+            lc.alignment = _RIGHT
+            vc = ws.cell(row=row, column=8, value=f"{cs_summary['currency']} {value:,.2f}")
+            vc.font = _BOLD
+            vc.alignment = _RIGHT
+            row += 1
 
     wb.save(output_path)
     return str(output_path)

@@ -8,6 +8,8 @@ from .step2_boq_parser import parse as parse_boq
 from .step3_catalog_matcher import match_catalog
 from .step4_gap_analyzer import analyze_gaps
 from .step5_excel_writer import write_output, write_distributor_export
+from .step6_cost_stack import load_defaults, run_cost_stack
+from .step_eox_checker import check_eox
 from .models import RFPLineItem
 
 
@@ -34,6 +36,7 @@ def run_e2_pipeline(
     rfp_text: str,
     template_path: Path,
     e1_output: E1Output | None = None,
+    cost_config: dict | None = None,
 ) -> dict:
     rfp_items = _items_from_e1_output(e1_output) if e1_output else extract_rfp_requirements(rfp_text)
 
@@ -41,8 +44,23 @@ def run_e2_pipeline(
     boq_items = parse_boq(template_path, detection)
 
     matches = match_catalog(rfp_items, vendor_list=e1_output.vendor_list if e1_output else None)
+
+    # EoX check on matched SKUs
+    matched_skus = [m.sku for m in matches if m.sku]
+    eox_warnings = check_eox(matched_skus)
+
     summary = analyze_gaps(matches)
-    output_path = write_output(summary, template_path, detection)
+
+    # CS-001 - CS-009 cost stack
+    effective_config = cost_config if cost_config is not None else load_defaults()
+    cost_stack_result = run_cost_stack(summary, effective_config)
+
+    output_path = write_output(
+        summary,
+        template_path,
+        detection,
+        cost_stack_result=cost_stack_result,
+    )
     distributor_path = write_distributor_export(summary, template_path)
 
     return {
@@ -58,4 +76,6 @@ def run_e2_pipeline(
         "total": summary.total,
         "currency": summary.currency,
         "boq_items": boq_items,
+        "eox_warnings": eox_warnings,
+        "cost_stack": cost_stack_result["summary"],
     }

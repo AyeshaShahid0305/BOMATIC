@@ -26,6 +26,12 @@ router = APIRouter(prefix="/e2", tags=["e2"])
 async def analyze_boq(
     rfp_session_id: str = Form(default=""),
     boq_template: UploadFile = File(...),
+    target_currency: str = Form(default="SAR"),
+    vat_country: str = Form(default="SA"),
+    vendor_discount_pct: float = Form(default=0.30),
+    inhouse_margin_pct: float = Form(default=0.10),
+    selling_mode: str = Form(default="margin"),
+    selling_pct: float = Form(default=0.25),
     db: Session = Depends(get_db),
 ):
     pipeline_state = None
@@ -70,7 +76,23 @@ async def analyze_boq(
         template_path = tmp_dir / template_name
         template_path.write_bytes(await boq_template.read())
 
-        result = run_e2_pipeline(rfp_text, template_path, e1_output=e1_output)
+        from app.engines.e2.step6_cost_stack import load_defaults
+        cost_config = load_defaults()
+        cost_config["target_currency"] = target_currency
+        cost_config["vat_country"] = vat_country
+        cost_config["vendor_discount_pct"] = max(0.0, min(0.99, vendor_discount_pct))
+        cost_config["inhouse_margin_pct"] = max(0.0, min(0.99, inhouse_margin_pct))
+        cost_config["selling_mode"] = selling_mode if selling_mode in ("margin", "markup") else "margin"
+        cost_config["selling_pct"] = max(0.0, min(0.99, selling_pct))
+        try:
+            result = run_e2_pipeline(
+                rfp_text,
+                template_path,
+                e1_output=e1_output,
+                cost_config=cost_config,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid BoQ template: {exc}") from exc
 
         if pipeline_state:
             outputs = dict(pipeline_state.step_outputs or {})
@@ -86,6 +108,16 @@ async def analyze_boq(
                 'requirements_baseline_count': result.get('requirements_baseline_count', 0),
                 'output_file': Path(result['output_file']).name,
                 'distributor_file': result.get('distributor_file') or '',
+                'eox_warnings': result.get('eox_warnings', []),
+                'cost_stack': result.get('cost_stack', {}),
+                'cost_config': {
+                    'target_currency': target_currency,
+                    'vat_country': vat_country,
+                    'vendor_discount_pct': vendor_discount_pct,
+                    'inhouse_margin_pct': inhouse_margin_pct,
+                    'selling_mode': selling_mode,
+                    'selling_pct': selling_pct,
+                },
             }
             pipeline_state.step_outputs = outputs
             if (opportunity.mode or 'rfp') == 'rfi':

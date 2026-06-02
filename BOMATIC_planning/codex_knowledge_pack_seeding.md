@@ -1,3 +1,42 @@
+# Codex Task: Knowledge Pack Seeding
+
+## Context
+
+BOMATIC's E2 BoM engine uses `backend/app/engines/e2/data/catalog.json` for SKU
+matching. It currently has 20 items — far too few for real demos. E2 also has no
+EoX (End-of-Life) checking, so engineers can approve BoMs containing discontinued
+products. There are no FX rate or VAT rate data files for the future cost stack.
+
+This task:
+1. Expands `catalog.json` to 100 SKUs across Cisco, Fortinet, Aruba, Palo Alto,
+   and Juniper.
+2. Creates `backend/app/engines/e2/data/eox.json` — a list of EoL/EoS SKUs.
+3. Adds a lightweight EoX check to the E2 pipeline — warns (does not block) when
+   matched SKUs are discontinued.
+4. Creates `backend/app/engines/e2/data/fx_rates.json` and `vat_rates.json` for
+   future cost stack use.
+5. Updates the E2 reviewer to flag EoX warnings if present.
+
+No DB changes. All data is consumed as JSON files.
+
+---
+
+## Step 1 — Read these files first
+
+1. `backend/app/engines/e2/data/catalog.json` — existing 20 items, understand schema
+2. `backend/app/engines/e2/step3_catalog_matcher.py`
+3. `backend/app/engines/e2/step4_gap_analyzer.py`
+4. `backend/app/engines/e2/pipeline.py`
+5. `backend/app/engines/e2/models.py`
+6. `backend/app/api/reviewer.py` — run_e2_reviewer function
+
+---
+
+## Step 2 — Replace `backend/app/engines/e2/data/catalog.json`
+
+Replace the entire file with this content (100 SKUs):
+
+```json
 [
   {"sku": "ASA5516-FPWR-K9", "product_name": "Cisco ASA 5516-X with FirePOWER Services", "vendor": "Cisco", "category": "security", "keywords": ["firewall", "asa", "firepower", "ngfw", "5516"], "unit_price": 4995.0},
   {"sku": "FPR1120-NGFW-K9", "product_name": "Cisco Firepower 1120 NGFW Appliance", "vendor": "Cisco", "category": "security", "keywords": ["firewall", "firepower", "ngfw", "1120"], "unit_price": 3500.0},
@@ -100,3 +139,458 @@
   {"sku": "GENERIC-INSTALL-DAY", "product_name": "Professional Installation Services (per day)", "vendor": "Generic", "category": "services", "keywords": ["installation", "services", "professional", "labor", "deployment", "engineer day"], "unit_price": 1200.0},
   {"sku": "GENERIC-SUPPORT-1Y", "product_name": "1-Year Maintenance & Support Contract", "vendor": "Generic", "category": "services", "keywords": ["support", "maintenance", "contract", "1 year", "subscription"], "unit_price": 2400.0}
 ]
+```
+
+---
+
+## Step 3 — Create `backend/app/engines/e2/data/eox.json`
+
+Create this file:
+
+```json
+[
+  {
+    "sku": "WS-C3750X-24P-E",
+    "product_name": "Cisco Catalyst 3750X 24-Port PoE+ Switch",
+    "end_of_sale": "2016-01-31",
+    "end_of_support": "2023-01-31",
+    "replacement_sku": "C9300-24P-E"
+  },
+  {
+    "sku": "WS-C3750X-48P-E",
+    "product_name": "Cisco Catalyst 3750X 48-Port PoE+ Switch",
+    "end_of_sale": "2016-01-31",
+    "end_of_support": "2023-01-31",
+    "replacement_sku": "C9300-48P-E"
+  },
+  {
+    "sku": "WS-C2960X-48FPS-L",
+    "product_name": "Cisco Catalyst 2960X 48-Port PoE+ Switch",
+    "end_of_sale": "2023-01-28",
+    "end_of_support": "2028-01-31",
+    "replacement_sku": "C9200-48P-E"
+  },
+  {
+    "sku": "WS-C2960X-24PS-L",
+    "product_name": "Cisco Catalyst 2960X 24-Port PoE+ Switch",
+    "end_of_sale": "2023-01-28",
+    "end_of_support": "2028-01-31",
+    "replacement_sku": "C9200-24P-E"
+  },
+  {
+    "sku": "ASA5506-K9",
+    "product_name": "Cisco ASA 5506-X",
+    "end_of_sale": "2022-08-31",
+    "end_of_support": "2027-08-31",
+    "replacement_sku": "FPR1120-NGFW-K9"
+  },
+  {
+    "sku": "ASA5516-FPWR-K9",
+    "product_name": "Cisco ASA 5516-X with FirePOWER",
+    "end_of_sale": "2022-08-31",
+    "end_of_support": "2027-08-31",
+    "replacement_sku": "FPR2110-NGFW-K9"
+  },
+  {
+    "sku": "AIR-AP2802I-E-K9",
+    "product_name": "Cisco Aironet 2800 Series Access Point",
+    "end_of_sale": "2022-04-30",
+    "end_of_support": "2027-04-30",
+    "replacement_sku": "CW9162I-EWC-E"
+  },
+  {
+    "sku": "AIR-AP3802I-E-K9",
+    "product_name": "Cisco Aironet 3800 Series Access Point",
+    "end_of_sale": "2022-04-30",
+    "end_of_support": "2027-04-30",
+    "replacement_sku": "CW9164I-EWC-E"
+  },
+  {
+    "sku": "WS-C3850-48P-E",
+    "product_name": "Cisco Catalyst 3850 48-Port PoE+ Switch",
+    "end_of_sale": "2022-10-31",
+    "end_of_support": "2027-10-31",
+    "replacement_sku": "C9300-48P-E"
+  },
+  {
+    "sku": "ISR4331/K9",
+    "product_name": "Cisco ISR 4331",
+    "end_of_sale": "2023-10-31",
+    "end_of_support": "2028-10-31",
+    "replacement_sku": "C8300-1N1S-4T2X"
+  }
+]
+```
+
+---
+
+## Step 4 — Create `backend/app/engines/e2/data/fx_rates.json`
+
+```json
+{
+  "base_currency": "USD",
+  "rates": {
+    "USD": 1.0,
+    "SAR": 3.75,
+    "AED": 3.673,
+    "EGP": 30.9,
+    "KWD": 0.307,
+    "QAR": 3.64,
+    "BHD": 0.376,
+    "OMR": 0.385,
+    "GBP": 0.79,
+    "EUR": 0.92
+  },
+  "updated": "2025-01-01"
+}
+```
+
+---
+
+## Step 5 — Create `backend/app/engines/e2/data/vat_rates.json`
+
+```json
+{
+  "rates": {
+    "SA": {"rate": 0.15, "name": "Saudi Arabia VAT"},
+    "AE": {"rate": 0.05, "name": "UAE VAT"},
+    "EG": {"rate": 0.14, "name": "Egypt VAT"},
+    "KW": {"rate": 0.0,  "name": "Kuwait (no VAT)"},
+    "QA": {"rate": 0.0,  "name": "Qatar (no VAT)"},
+    "BH": {"rate": 0.10, "name": "Bahrain VAT"},
+    "OM": {"rate": 0.05, "name": "Oman VAT"},
+    "GB": {"rate": 0.20, "name": "UK VAT"},
+    "DE": {"rate": 0.19, "name": "Germany VAT"},
+    "US": {"rate": 0.0,  "name": "USA (no federal VAT)"}
+  }
+}
+```
+
+---
+
+## Step 6 — Create `backend/app/engines/e2/step_eox_checker.py`
+
+```python
+"""
+EoX (End-of-Life/End-of-Sale) checker for matched SKUs.
+
+check_eox(matched_skus, eox_data) -> list[dict]
+
+Returns a list of EoX warning dicts for any matched SKU found in the EoX list.
+"""
+
+import json
+from datetime import date
+from pathlib import Path
+
+_EOX_PATH = Path(__file__).parent / "data" / "eox.json"
+
+
+def _load_eox() -> dict[str, dict]:
+    """Load EoX data as a dict keyed by SKU (uppercase)."""
+    try:
+        with open(_EOX_PATH, encoding="utf-8") as f:
+            records = json.load(f)
+        return {r["sku"].upper(): r for r in records}
+    except Exception:
+        return {}
+
+
+def check_eox(matched_skus: list[str]) -> list[dict]:
+    """
+    Check a list of SKUs against the EoX database.
+
+    Args:
+        matched_skus: list of SKU strings from the catalog match results.
+
+    Returns:
+        list of dicts, one per EoX hit:
+        {
+            "sku": str,
+            "product_name": str,
+            "end_of_sale": str,       # ISO date or ""
+            "end_of_support": str,    # ISO date or ""
+            "replacement_sku": str,
+            "is_end_of_sale": bool,   # EoS date is in the past
+            "is_end_of_support": bool # EoL date is in the past
+        }
+    """
+    eox_db = _load_eox()
+    today = date.today().isoformat()
+    warnings = []
+
+    for sku in matched_skus:
+        record = eox_db.get(sku.upper())
+        if not record:
+            continue
+
+        eos = record.get("end_of_sale", "")
+        eol = record.get("end_of_support", "")
+
+        warnings.append({
+            "sku": sku,
+            "product_name": record.get("product_name", ""),
+            "end_of_sale": eos,
+            "end_of_support": eol,
+            "replacement_sku": record.get("replacement_sku", ""),
+            "is_end_of_sale": bool(eos and eos <= today),
+            "is_end_of_support": bool(eol and eol <= today),
+        })
+
+    return warnings
+```
+
+---
+
+## Step 7 — Update `backend/app/engines/e2/pipeline.py`
+
+**Add import:**
+```python
+from .step_eox_checker import check_eox
+```
+
+**Add EoX check** after `match_catalog` and before `analyze_gaps`. Find:
+
+```python
+    matches = match_catalog(rfp_items, vendor_list=e1_output.vendor_list if e1_output else None)
+    summary = analyze_gaps(matches)
+```
+
+Replace with:
+```python
+    matches = match_catalog(rfp_items, vendor_list=e1_output.vendor_list if e1_output else None)
+
+    # EoX check on matched SKUs
+    matched_skus = [m.sku for m in matches if m.sku]
+    eox_warnings = check_eox(matched_skus)
+
+    summary = analyze_gaps(matches)
+```
+
+**Add `eox_warnings` to the return dict:**
+```python
+    return {
+        "output_file": output_path,
+        "distributor_file": distributor_path.name,
+        "vendor_list": e1_output.vendor_list if e1_output else [],
+        "requirements_baseline_count": len(e1_output.requirements_baseline) if e1_output else 0,
+        "matched_count": len(summary.matched_items),
+        "unmatched_count": len(summary.unmatched_items),
+        "low_confidence_count": len(summary.low_confidence_items),
+        "subtotal": summary.subtotal,
+        "discount_amount": summary.discount_amount,
+        "total": summary.total,
+        "currency": summary.currency,
+        "boq_items": boq_items,
+        "eox_warnings": eox_warnings,
+    }
+```
+
+---
+
+## Step 8 — Update `backend/app/api/e2_routes.py`
+
+**Store `eox_warnings` in step_outputs["e2"].**
+
+Find the `outputs['e2']` block and add:
+```python
+                'eox_warnings': result.get('eox_warnings', []),
+```
+
+---
+
+## Step 9 — Update `run_e2_reviewer` in `backend/app/api/reviewer.py`
+
+Add an EoX check after the existing deterministic checks in `run_e2_reviewer`.
+Find the block that checks `vendor_list`:
+```python
+    # Warning: no vendors identified from E1
+    if not vendor_list:
+        warnings.append(
+            "No vendor list was passed from E1. ..."
+        )
+```
+
+Add immediately after it:
+```python
+    # Warning: EoX hits
+    eox_warnings = e2_data.get("eox_warnings", [])
+    eos_hits = [w for w in eox_warnings if w.get("is_end_of_sale")]
+    eol_hits = [w for w in eox_warnings if w.get("is_end_of_support")]
+
+    if eol_hits:
+        skus = ", ".join(w["sku"] for w in eol_hits[:3])
+        more = f" (+{len(eol_hits) - 3} more)" if len(eol_hits) > 3 else ""
+        errors.append(
+            f"End-of-Life SKUs in BoM: {skus}{more}. These products are no longer "
+            "supported — replace with recommended alternatives before submitting."
+        )
+    elif eos_hits:
+        skus = ", ".join(w["sku"] for w in eos_hits[:3])
+        more = f" (+{len(eos_hits) - 3} more)" if len(eos_hits) > 3 else ""
+        warnings.append(
+            f"End-of-Sale SKUs in BoM: {skus}{more}. These products can no longer "
+            "be ordered — verify availability or use replacements."
+        )
+```
+
+Note: EoL (end of support) is an error — the product is unsupported. EoS (end of
+sale only, still supported) is a warning — the product works but can't be reordered.
+
+---
+
+## Step 10 — Validation steps
+
+### 10A. JSON validity check
+```
+backend\.venv\Scripts\python.exe -c "
+import json
+for f in [
+    'backend/app/engines/e2/data/catalog.json',
+    'backend/app/engines/e2/data/eox.json',
+    'backend/app/engines/e2/data/fx_rates.json',
+    'backend/app/engines/e2/data/vat_rates.json',
+]:
+    d = json.load(open(f))
+    count = len(d) if isinstance(d, list) else len(d.get('rates', d))
+    print(f'{f}: valid JSON, {count} items')
+"
+```
+Expected: 4 lines, catalog showing 100, eox showing 10, fx_rates showing 10, vat_rates showing 10.
+
+### 10B. Syntax check
+```
+backend\.venv\Scripts\python.exe -m py_compile backend/app/engines/e2/step_eox_checker.py
+backend\.venv\Scripts\python.exe -m py_compile backend/app/engines/e2/pipeline.py
+backend\.venv\Scripts\python.exe -m py_compile backend/app/api/e2_routes.py
+backend\.venv\Scripts\python.exe -m py_compile backend/app/api/reviewer.py
+```
+Expected: no output.
+
+### 10C. EoX checker unit test
+```
+backend\.venv\Scripts\python.exe -c "
+from app.engines.e2.step_eox_checker import check_eox
+
+# Known EoL SKU
+results = check_eox(['WS-C3750X-48P-E', 'C9300-48P-E'])
+assert len(results) == 1, f'Expected 1 EoX hit, got {len(results)}'
+assert results[0]['sku'] == 'WS-C3750X-48P-E'
+assert results[0]['is_end_of_sale'] == True
+assert results[0]['replacement_sku'] == 'C9300-48P-E'
+print('EoX checker: PASS')
+
+# Empty input
+results = check_eox([])
+assert results == []
+print('EoX empty: PASS')
+
+# Unknown SKU
+results = check_eox(['NONEXISTENT-SKU'])
+assert results == []
+print('EoX unknown: PASS')
+"
+```
+Expected: 3 PASS lines.
+
+### 10D. Catalog size check
+```
+backend\.venv\Scripts\python.exe -c "
+import json
+catalog = json.load(open('backend/app/engines/e2/data/catalog.json'))
+assert len(catalog) >= 100, f'Catalog has only {len(catalog)} items'
+vendors = set(c['vendor'] for c in catalog)
+print(f'Catalog: {len(catalog)} items, vendors: {vendors}')
+assert 'Cisco' in vendors
+assert 'Fortinet' in vendors
+assert 'Aruba' in vendors
+print('Catalog check: PASS')
+"
+```
+Expected: vendor set includes Cisco, Fortinet, Aruba, and PASS.
+
+### 10E. Reviewer EoX integration test
+```
+backend\.venv\Scripts\python.exe -c "
+from app.api.reviewer import run_e2_reviewer
+
+# EoL SKU in BoM should become an error
+e2_data = {
+    'matched_count': 5,
+    'unmatched_count': 0,
+    'low_confidence_count': 0,
+    'total': 50000,
+    'currency': 'USD',
+    'vendor_list': ['Cisco'],
+    'requirements_baseline_count': 5,
+    'eox_warnings': [
+        {'sku': 'WS-C3750X-48P-E', 'is_end_of_sale': True,
+         'is_end_of_support': True, 'replacement_sku': 'C9300-48P-E'}
+    ],
+}
+result = run_e2_reviewer(e2_data, api_key='')
+assert not result['passed'], 'EoL SKU should fail review'
+assert any('End-of-Life' in e for e in result['errors'])
+print('EoX reviewer error: PASS')
+
+# EoS only should be a warning not error
+e2_data['eox_warnings'][0]['is_end_of_support'] = False
+result = run_e2_reviewer(e2_data, api_key='')
+assert result['passed'], 'EoS-only should pass'
+assert any('End-of-Sale' in w for w in result['warnings'])
+print('EoX reviewer warning: PASS')
+"
+```
+Expected: 2 PASS lines.
+
+---
+
+## Step 11 — Summary of files changed
+
+| Action   | File path                                          |
+|----------|----------------------------------------------------|
+| Modified | `backend/app/engines/e2/data/catalog.json`         |
+| Created  | `backend/app/engines/e2/data/eox.json`             |
+| Created  | `backend/app/engines/e2/data/fx_rates.json`        |
+| Created  | `backend/app/engines/e2/data/vat_rates.json`       |
+| Created  | `backend/app/engines/e2/step_eox_checker.py`       |
+| Modified | `backend/app/engines/e2/pipeline.py`               |
+| Modified | `backend/app/api/e2_routes.py`                     |
+| Modified | `backend/app/api/reviewer.py`                      |
+
+No DB migration. No frontend changes. No new pip dependencies.
+
+---
+
+## Step 12 — Git commit message
+
+```
+feat: expand knowledge packs — 100-SKU catalog, EoX checking, FX/VAT rates
+
+- catalog.json: expanded from 20 to 100 SKUs covering Cisco (switches,
+  routers, wireless, security, UCS, licenses), Fortinet (firewalls,
+  FortiSwitch, FortiAP, FortiAnalyzer, FortiManager, licenses), Aruba
+  (switches, APs, controller), Palo Alto (PA-440 through PA-5220),
+  Juniper (EX2300/3400/4300 switches, SRX gateways), Generic
+  (cabling, racks, services)
+
+- eox.json: 10 known EoL/EoS Cisco SKUs with end-of-sale date,
+  end-of-support date, and recommended replacement SKU
+
+- fx_rates.json: USD-based rates for SAR, AED, EGP, KWD, QAR,
+  BHD, OMR, GBP, EUR (for future cost stack CS-001)
+
+- vat_rates.json: VAT rates for SA (15%), AE (5%), EG (14%),
+  BH (10%), OM (5%), KW/QA/US (0%), GB (20%), DE (19%)
+
+- step_eox_checker.py: check_eox(matched_skus) -> list[dict]
+  Loads eox.json, returns hits with is_end_of_sale/is_end_of_support flags
+
+- pipeline.py: run EoX check after catalog matching; add eox_warnings
+  to result dict
+
+- e2_routes.py: store eox_warnings in step_outputs["e2"]
+
+- reviewer.py: run_e2_reviewer checks eox_warnings — EoL SKUs become
+  errors (unsupported), EoS-only SKUs become warnings (unavailable)
+```

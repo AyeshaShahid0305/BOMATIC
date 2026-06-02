@@ -270,6 +270,26 @@ def run_e2_reviewer(e2_data: dict, api_key: str) -> dict:
             "results may be less accurate."
         )
 
+    # Warning: EoX hits
+    eox_warnings = e2_data.get("eox_warnings", [])
+    eos_hits = [w for w in eox_warnings if w.get("is_end_of_sale")]
+    eol_hits = [w for w in eox_warnings if w.get("is_end_of_support")]
+
+    if eol_hits:
+        skus = ", ".join(w["sku"] for w in eol_hits[:3])
+        more = f" (+{len(eol_hits) - 3} more)" if len(eol_hits) > 3 else ""
+        errors.append(
+            f"End-of-Life SKUs in BoM: {skus}{more}. These products are no longer "
+            "supported - replace with recommended alternatives before submitting."
+        )
+    elif eos_hits:
+        skus = ", ".join(w["sku"] for w in eos_hits[:3])
+        more = f" (+{len(eos_hits) - 3} more)" if len(eos_hits) > 3 else ""
+        warnings.append(
+            f"End-of-Sale SKUs in BoM: {skus}{more}. These products can no longer "
+            "be ordered - verify availability or use replacements."
+        )
+
     # AI qualitative check
     if not errors:
         prompt = f"""You are reviewing an automated Bill of Materials generation result.

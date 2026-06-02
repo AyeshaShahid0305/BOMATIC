@@ -33,6 +33,10 @@ const statusStyles: Record<string, string> = {
   uploaded: "bg-gray-100 text-gray-700",
   checkpoint_1_pending: "bg-blue-100 text-blue-700",
   checkpoint_2_pending: "bg-yellow-100 text-yellow-700",
+  e2_approved: "bg-teal-100 text-teal-800",
+  e3_approved: "bg-purple-100 text-purple-800",
+  e4_approved: "bg-orange-100 text-orange-800",
+  e5_approved: "bg-indigo-100 text-indigo-800",
   complete: "bg-green-100 text-green-700",
 };
 
@@ -63,8 +67,15 @@ function engineLink(opportunity: Opportunity) {
   const id = opportunity.opportunity_id;
   const mode = opportunity.mode ?? "rfp";
   const step = opportunity.current_step ?? 0;
+  const status = opportunity.status;
 
   if (!id) return mode === "rfi" ? "/e4" : "/e1/upload";
+
+  // Status-aware routing for approved states
+  if (status === "e2_approved") return `/e3?session_id=${id}`;
+  if (status === "e4_approved") return `/e5?session_id=${id}`;
+  if (status === "e5_approved") return `/e2?session_id=${id}`;
+  if (status === "complete")    return `/e3/${id}/review`;
 
   if (mode === "rfi") {
     if (step < 4) return `/e4/${id}`;
@@ -113,7 +124,11 @@ export default function OpportunitiesPage() {
   }, []);
 
   const totalCompleted = useMemo(
-    () => opportunities.filter(item => item.status.endsWith("_complete")).length,
+    () => opportunities.filter(item =>
+      item.status === "complete" ||
+      item.status.endsWith("_complete") ||
+      item.status.endsWith("_approved")
+    ).length,
     [opportunities]
   );
 

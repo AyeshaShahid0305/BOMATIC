@@ -242,13 +242,14 @@ export default function OpportunitiesPage() {
                   <div className="mt-5">
                     <p className="text-xs font-medium uppercase text-gray-400">Engines completed</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {completed.length > 0 ? completed.map(engine => (
-                        <span key={engine} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                          {engine}
-                        </span>
-                      )) : (
-                        <span className="text-sm text-gray-400">No completed outputs yet</span>
-                      )}
+                      {["e1", "e2", "e3", "e4", "e5"].filter(e => completed.includes(e)).length > 0
+                        ? ["e1", "e2", "e3", "e4", "e5"].filter(e => completed.includes(e)).map(engine => (
+                          <span key={engine} className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold uppercase text-green-700">
+                            {engine.toUpperCase()}
+                          </span>
+                        ))
+                        : <span className="text-sm text-gray-400">No completed outputs yet</span>
+                      }
                     </div>
                   </div>
 

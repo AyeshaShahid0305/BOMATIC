@@ -118,14 +118,19 @@ def assemble_proposal(
         1 for s in assembled
         if s['required'] and _PLACEHOLDER in s['content']
     )
-    if required_total > 0:
+
+    # Warn about incomplete sections but never block DOCX generation.
+    # Placeholders are rendered in grey italic by the DOCX writer so engineers
+    # can see exactly what needs manual completion.
+    if required_total > 0 and placeholder_count > 0:
+        import warnings
         placeholder_pct = placeholder_count / required_total
-        if placeholder_pct > 0.5:
-            raise ValueError(
-                f'Proposal is incomplete: {placeholder_count} of {required_total} required sections '
-                f'still contain placeholder content ({int(placeholder_pct * 100)}%). '
-                f'Generate AI narratives for all required sections before exporting.'
-            )
+        warnings.warn(
+            f'Proposal incomplete: {placeholder_count}/{required_total} required sections '
+            f'contain placeholder content ({int(placeholder_pct * 100)}%). '
+            f'These will be rendered as grey italic text in the DOCX.',
+            stacklevel=2,
+        )
 
     return assembled
 

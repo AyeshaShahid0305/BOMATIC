@@ -1,7 +1,9 @@
-import json
 import re
 from pathlib import Path
 
+from app.config import get_settings
+
+from .data_sources import load_records, warn_if_stale
 from .models import CatalogMatch, RFPLineItem
 
 _CATALOG_PATH = Path(__file__).parent / "data" / "catalog.json"
@@ -21,9 +23,19 @@ def _jaccard(a: set[str], b: set[str]) -> float:
     return len(a & b) / len(a | b)
 
 
-def _load_catalog() -> list[dict]:
-    with open(_CATALOG_PATH, encoding="utf-8") as f:
-        return json.load(f)
+def _load_catalog(path: Path) -> list[dict]:
+    warn_if_stale(path, "Catalog")
+    records = load_records(path)
+    for record in records:
+        record["unit_price"] = float(record.get("unit_price") or 0)
+        keywords = record.get("keywords", [])
+        if isinstance(keywords, str):
+            record["keywords"] = [
+                keyword.strip()
+                for keyword in re.split(r"[|;,]", keywords)
+                if keyword.strip()
+            ]
+    return records
 
 
 def _score(rfp_item: RFPLineItem, product: dict) -> tuple[float, str]:
@@ -48,10 +60,11 @@ def _score(rfp_item: RFPLineItem, product: dict) -> tuple[float, str]:
 
 def match_catalog(
     rfp_items: list[RFPLineItem],
-    catalog_path: Path = _CATALOG_PATH,
+    catalog_path: Path | None = None,
     vendor_list: list[str] | None = None,
 ) -> list[CatalogMatch]:
-    catalog = _load_catalog() if catalog_path == _CATALOG_PATH else json.loads(catalog_path.read_text(encoding="utf-8"))
+    source_path = Path(catalog_path or get_settings().catalog_data_source)
+    catalog = _load_catalog(source_path)
     if vendor_list:
         allowed_vendors = {vendor.lower() for vendor in vendor_list}
         catalog = [

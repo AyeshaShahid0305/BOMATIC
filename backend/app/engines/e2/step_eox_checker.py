@@ -6,9 +6,12 @@ check_eox(matched_skus) -> list[dict]
 Returns a list of EoX warning dicts for any matched SKU found in the EoX list.
 """
 
-import json
 from datetime import date
 from pathlib import Path
+
+from app.config import get_settings
+
+from .data_sources import load_records
 
 _EOX_PATH = Path(__file__).parent / "data" / "eox.json"
 
@@ -16,8 +19,7 @@ _EOX_PATH = Path(__file__).parent / "data" / "eox.json"
 def _load_eox() -> dict[str, dict]:
     """Load EoX data as a dict keyed by SKU (uppercase)."""
     try:
-        with open(_EOX_PATH, encoding="utf-8") as f:
-            records = json.load(f)
+        records = load_records(Path(get_settings().eox_data_source))
         return {r["sku"].upper(): r for r in records}
     except Exception:
         return {}

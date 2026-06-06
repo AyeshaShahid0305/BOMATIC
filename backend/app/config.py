@@ -1,5 +1,9 @@
 from functools import lru_cache
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_E2_DATA_DIR = Path(__file__).resolve().parent / "engines" / "e2" / "data"
 
 
 class Settings(BaseSettings):
@@ -12,6 +16,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 480  # 8 hours
+    catalog_data_source: Path = _E2_DATA_DIR / "catalog.json"
+    eox_data_source: Path = _E2_DATA_DIR / "eox.json"
+    fx_data_source: Path = _E2_DATA_DIR / "fx_rates.json"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

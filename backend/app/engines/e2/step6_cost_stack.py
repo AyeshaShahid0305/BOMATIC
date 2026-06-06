@@ -10,6 +10,9 @@ from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 
+from app.config import get_settings
+
+from .data_sources import load_mapping, warn_if_stale
 from .models import PricingSummary
 
 _DATA_DIR = Path(__file__).parent / "data"
@@ -24,8 +27,10 @@ def load_defaults() -> dict:
 
 
 def _load_fx_rates() -> dict[str, float]:
-    with open(_FX_PATH, encoding="utf-8") as f:
-        return json.load(f)["rates"]
+    path = Path(get_settings().fx_data_source)
+    data = load_mapping(path)
+    warn_if_stale(path, "FX", data)
+    return {currency: float(rate) for currency, rate in data["rates"].items()}
 
 
 def _load_vat_rates() -> dict[str, dict]:

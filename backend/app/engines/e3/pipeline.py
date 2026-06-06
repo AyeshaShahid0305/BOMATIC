@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.engines.e2.models import PricingSummary
+from app.schemas.pipeline import E2PricingArtifact
 from .step1_template_selector import select_template
 from .step2_e1_data_reader import read_e1_data
 from .step3_e2_data_reader import read_e2_data
@@ -17,7 +17,8 @@ def run_e3_pipeline(
     session_id: str,
     db: Session,
     gbb_tier: str = "better",
-    pricing_summary: Optional[PricingSummary] = None,
+    pricing_summary: Optional[E2PricingArtifact] = None,
+    allow_placeholders: bool = False,
 ) -> dict:
     sections = select_template("rfp")
     e1_data = read_e1_data(session_id, db)
@@ -27,7 +28,14 @@ def run_e3_pipeline(
 
     e2_data = read_e2_data(pricing_summary) if pricing_summary else {}
     narratives = generate_narratives(e1_data, e2_data, sections, gbb_tier)
-    assembled = assemble_proposal(sections, narratives, e1_data, e2_data, gbb_result)
+    assembled = assemble_proposal(
+        sections,
+        narratives,
+        e1_data,
+        e2_data,
+        gbb_result,
+        allow_placeholders=allow_placeholders,
+    )
     output_path = write_proposal(assembled, e1_data["project_name"], gbb_tier)
 
     # Convert DOCX to PDF (best-effort - None if LibreOffice unavailable)

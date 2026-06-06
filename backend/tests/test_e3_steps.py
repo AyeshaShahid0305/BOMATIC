@@ -9,8 +9,9 @@ from app.engines.e2.models import CatalogMatch, PricingSummary, RFPLineItem
 from app.engines.e3.step1_template_selector import select_template
 from app.engines.e3.step3_e2_data_reader import read_e2_data
 from app.engines.e3.step4_narrative_generator import generate_narratives
-from app.engines.e3.step5_assembler import assemble_proposal
+from app.engines.e3.step5_assembler import ProposalIncompleteError, assemble_proposal
 from app.engines.e3.step8_gbb_pricing import calculate_gbb
+from app.schemas.pipeline import E2PricingArtifact
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ def test_read_e2_data_returns_expected_structure():
         total=850.0,
     )
 
-    result = read_e2_data(summary)
+    result = read_e2_data(E2PricingArtifact.from_pricing_summary(summary))
 
     assert isinstance(result, dict)
     assert "matched_items" in result
@@ -123,9 +124,48 @@ def test_assemble_proposal_returns_sections_with_title_and_content(monkeypatch):
     gbb_result = calculate_gbb(0.0, "better")
     narratives = generate_narratives(e1_data, e2_data, sections, gbb_tier="better")
 
-    assembled = assemble_proposal(sections, narratives, e1_data, e2_data, gbb_result)
+    assembled = assemble_proposal(
+        sections,
+        narratives,
+        e1_data,
+        e2_data,
+        gbb_result,
+        allow_placeholders=True,
+    )
 
     assert isinstance(assembled, list)
     assert len(assembled) == len(sections)
     assert all("title" in s for s in assembled)
     assert all("content" in s for s in assembled)
+
+
+def test_required_section_placeholder_is_rejected():
+    sections = select_template("rfp")
+    narratives = {section.id: "Completed section content." for section in sections}
+    narratives[0] = "[Section content to be completed manually]"
+
+    with pytest.raises(ProposalIncompleteError) as exc_info:
+        assemble_proposal(
+            sections,
+            narratives,
+            {"requirements": []},
+            {},
+            calculate_gbb(0.0, "good"),
+        )
+
+    assert exc_info.value.incomplete_sections == [{"id": 0, "title": "Cover Page"}]
+
+
+def test_proposal_without_required_placeholders_is_accepted():
+    sections = select_template("rfp")
+    narratives = {section.id: "Completed section content." for section in sections}
+
+    assembled = assemble_proposal(
+        sections,
+        narratives,
+        {"requirements": []},
+        {},
+        calculate_gbb(0.0, "good"),
+    )
+
+    assert len(assembled) == len(sections)

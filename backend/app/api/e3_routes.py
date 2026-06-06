@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -16,19 +16,32 @@ from app.engines.e2.step1_rfp_extractor import extract_rfp_requirements
 from app.engines.e2.step3_catalog_matcher import match_catalog
 from app.engines.e2.step4_gap_analyzer import analyze_gaps
 from app.engines.e3 import run_e3_pipeline
+from app.engines.e3.step5_assembler import ProposalIncompleteError
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import E2PricingArtifact
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e3" / "output"
 
 router = APIRouter(prefix="/e3", tags=["e3"])
 
 
+def _load_pricing_artifact(data: dict) -> E2PricingArtifact:
+    try:
+        return E2PricingArtifact.model_validate(data)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Persisted E2 pricing artifact is invalid. Re-run E2 analysis.",
+        ) from exc
+
+
 @router.post("/generate")
 async def generate_proposal(
     rfp_session_id: str = Form(...),
     gbb_tier: str = Form("better"),
+    allow_placeholders: bool = Form(False),
     boq_template: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
@@ -49,7 +62,7 @@ async def generate_proposal(
     pricing_summary = None
 
     if persisted_e2:
-        pricing_summary = persisted_e2
+        pricing_summary = _load_pricing_artifact(persisted_e2)
     elif boq_template is not None:
         documents = (
             db.query(Document)
@@ -72,12 +85,18 @@ async def generate_proposal(
 
             rfp_items = extract_rfp_requirements(rfp_text)
             matches = match_catalog(rfp_items)
-            pricing_summary = analyze_gaps(matches)
+            pricing_summary = E2PricingArtifact.from_pricing_summary(analyze_gaps(matches))
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
     try:
-        result = run_e3_pipeline(rfp_session_id, db, gbb_tier, pricing_summary)
+        result = run_e3_pipeline(
+            rfp_session_id,
+            db,
+            gbb_tier,
+            pricing_summary,
+            allow_placeholders=allow_placeholders,
+        )
         if pipeline_state:
             outputs = dict(pipeline_state.step_outputs or {})
             outputs['e3'] = {
@@ -97,6 +116,15 @@ async def generate_proposal(
             flag_modified(pipeline_state, 'step_outputs')
             db.commit()
         return result
+    except ProposalIncompleteError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Proposal generation blocked because required sections are incomplete.",
+                "incomplete_sections": exc.incomplete_sections,
+                "hint": "Complete the listed sections or set allow_placeholders=true for dev/demo use.",
+            },
+        ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

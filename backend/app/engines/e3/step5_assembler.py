@@ -6,6 +6,27 @@ _OPTIONAL_PREFIX = "OPTIONAL — REMOVE IF NOT NEEDED\n\n"
 _COMMERCIAL_SECTION_TITLE = "Commercial Proposal"
 _COMPLIANCE_SECTION_TITLE = "Compliance Matrix"
 
+REQUIRED_COMPLETE_SECTION_TITLES = frozenset({
+    "Cover Page",
+    "Cover Letter / Introduction",
+    "Executive Summary",
+    "Understanding of Customer Requirements",
+    "Proposed Solution",
+    "Technical Specifications",
+    "Implementation Approach",
+    "Commercial Proposal",
+    "Scope, Assumptions, Exclusions, Dependencies",
+    "Company Profile",
+    "Signature Page",
+})
+
+
+class ProposalIncompleteError(Exception):
+    def __init__(self, incomplete_sections: list[dict]):
+        self.incomplete_sections = incomplete_sections
+        titles = ", ".join(section["title"] for section in incomplete_sections)
+        super().__init__(f"Required proposal sections contain placeholders: {titles}")
+
 
 def _build_pricing_table(e2_data: dict, gbb_result: GBBResult) -> str:
     items = e2_data.get("matched_items", [])
@@ -89,6 +110,7 @@ def assemble_proposal(
     e1_data: dict,
     e2_data: dict,
     gbb_result: GBBResult,
+    allow_placeholders: bool = False,
 ) -> list[dict]:
     pricing_table = _build_pricing_table(e2_data, gbb_result)
     compliance_summary = _build_compliance_summary(e1_data)
@@ -113,24 +135,14 @@ def assemble_proposal(
             "ai_generated": section.ai_generated,
         })
 
-    required_total = sum(1 for s in assembled if s['required'])
-    placeholder_count = sum(
-        1 for s in assembled
-        if s['required'] and _PLACEHOLDER in s['content']
-    )
-
-    # Warn about incomplete sections but never block DOCX generation.
-    # Placeholders are rendered in grey italic by the DOCX writer so engineers
-    # can see exactly what needs manual completion.
-    if required_total > 0 and placeholder_count > 0:
-        import warnings
-        placeholder_pct = placeholder_count / required_total
-        warnings.warn(
-            f'Proposal incomplete: {placeholder_count}/{required_total} required sections '
-            f'contain placeholder content ({int(placeholder_pct * 100)}%). '
-            f'These will be rendered as grey italic text in the DOCX.',
-            stacklevel=2,
-        )
+    incomplete_sections = [
+        {"id": section["id"], "title": section["title"]}
+        for section in assembled
+        if section["title"] in REQUIRED_COMPLETE_SECTION_TITLES
+        and _PLACEHOLDER in section["content"]
+    ]
+    if incomplete_sections and not allow_placeholders:
+        raise ProposalIncompleteError(incomplete_sections)
 
     return assembled
 

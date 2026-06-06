@@ -26,6 +26,7 @@ router = APIRouter(prefix="/e2", tags=["e2"])
 @router.post("/analyze")
 async def analyze_boq(
     rfp_session_id: str = Form(default=""),
+    pasted_text: str = Form(default=""),
     boq_template: UploadFile = File(...),
     target_currency: str = Form(default="SAR"),
     vat_country: str = Form(default="SA"),
@@ -99,6 +100,7 @@ async def analyze_boq(
                 template_path,
                 e1_output=e1_output,
                 e5_components=e5_components,
+                pasted_text=pasted_text,
                 cost_config=cost_config,
             )
         except Exception as exc:

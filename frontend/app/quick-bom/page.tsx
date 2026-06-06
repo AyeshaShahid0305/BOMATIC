@@ -27,6 +27,7 @@ function fmt(n: number) {
 
 export default function QuickBomPage() {
   const [projectName, setProjectName] = useState("");
+  const [pastedText, setPastedText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function QuickBomPage() {
 
     const form = new FormData();
     form.append("rfp_session_id", "");
+    form.append("pasted_text", pastedText);
     form.append("boq_template", file);
 
     try {
@@ -68,7 +70,7 @@ export default function QuickBomPage() {
     }
   }
 
-  const canSubmit = file !== null && !loading;
+  const canSubmit = file !== null && pastedText.trim().length > 0 && !loading;
 
   return (
     <div className="min-h-screen bg-teal-50">
@@ -108,6 +110,24 @@ export default function QuickBomPage() {
                 placeholder="e.g. ACME Network Refresh 2024"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
+            </div>
+
+            {/* Pasted line items */}
+            <div className="space-y-1.5">
+              <label htmlFor="pasted-line-items" className="text-sm font-medium text-gray-700">
+                Line Items
+              </label>
+              <textarea
+                id="pasted-line-items"
+                value={pastedText}
+                onChange={e => setPastedText(e.target.value)}
+                rows={7}
+                placeholder={"2, Cisco Catalyst 9300 48-port switch\n5\tWireless access point"}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm text-gray-800 placeholder-gray-400 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              />
+              <p className="text-xs text-gray-400">
+                One item per line using quantity, then description. Comma and tab separators are supported.
+              </p>
             </div>
 
             {/* BoQ template upload */}

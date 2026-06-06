@@ -11,6 +11,7 @@ from .step5_excel_writer import write_output, write_distributor_export
 from .step6_cost_stack import load_defaults, run_cost_stack
 from .step_eox_checker import check_eox
 from .models import RFPLineItem
+from .pasted_line_parser import parse_pasted_line_items
 
 
 def _items_from_e1_output(e1_output: E1Output) -> list[RFPLineItem]:
@@ -51,9 +52,13 @@ def run_e2_pipeline(
     template_path: Path,
     e1_output: E1Output | None = None,
     e5_components: E5ComponentArtifact | None = None,
+    pasted_text: str = "",
     cost_config: dict | None = None,
 ) -> dict:
-    rfp_items = _items_from_e1_output(e1_output) if e1_output else extract_rfp_requirements(rfp_text)
+    if pasted_text.strip():
+        rfp_items = parse_pasted_line_items(pasted_text)
+    else:
+        rfp_items = _items_from_e1_output(e1_output) if e1_output else extract_rfp_requirements(rfp_text)
     if e5_components:
         rfp_items.extend(_items_from_e5_components(e5_components))
 
@@ -86,6 +91,7 @@ def run_e2_pipeline(
         "distributor_file": distributor_path.name,
         "vendor_list": e1_output.vendor_list if e1_output else [],
         "requirements_baseline_count": len(e1_output.requirements_baseline) if e1_output else 0,
+        "requirement_input_count": len(rfp_items),
         "matched_count": len(summary.matched_items),
         "unmatched_count": len(summary.unmatched_items),
         "low_confidence_count": len(summary.low_confidence_items),

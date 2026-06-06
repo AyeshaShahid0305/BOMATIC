@@ -45,6 +45,7 @@ from app.engines.e3.step5_assembler import assemble_proposal
 from app.engines.e3.step6_docx_writer import write_proposal
 from app.engines.e3.step8_gbb_pricing import calculate_gbb
 from app.engines.e3.step3_e2_data_reader import read_e2_data
+from app.schemas.pipeline import E2PricingArtifact
 
 e1_data = {
     "project_name": "Network Infrastructure Upgrade - Riyadh HQ",
@@ -55,7 +56,7 @@ e1_data = {
 }
 
 sections = select_template("rfp")
-e2_data = read_e2_data(summary)
+e2_data = read_e2_data(E2PricingArtifact.from_pricing_summary(summary))
 gbb_result = calculate_gbb(summary.total, "better")
 print(f"Step8: GBB better -> {gbb_result.adjusted_price:.2f} USD")
 
@@ -63,7 +64,14 @@ narratives = generate_narratives(e1_data, e2_data, sections, "better")
 ai_done = sum(1 for v in narratives.values() if "[Section content" not in v)
 print(f"Step4: {ai_done} AI narratives generated out of {len(narratives)} sections")
 
-assembled = assemble_proposal(sections, narratives, e1_data, e2_data, gbb_result)
+assembled = assemble_proposal(
+    sections,
+    narratives,
+    e1_data,
+    e2_data,
+    gbb_result,
+    allow_placeholders=True,
+)
 out_doc = write_proposal(assembled, e1_data["project_name"], "better")
 print(f"Step6: DOCX written -> {out_doc}")
 

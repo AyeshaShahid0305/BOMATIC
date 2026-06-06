@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 from sqlalchemy import Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -18,7 +19,7 @@ class PipelineState(Base):
     # 0 = not started, 1-12 = current step, 13 = complete
     current_step: Mapped[int] = mapped_column(Integer, default=0)
     # Stores step outputs as they complete: {1: {...}, 2: {...}, ...}
-    step_outputs: Mapped[dict] = mapped_column(JSONB, default=dict)
+    step_outputs: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

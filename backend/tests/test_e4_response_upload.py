@@ -135,3 +135,47 @@ def test_response_upload_persists_loadable_baseline_artifact():
     assert artifact.source_filename == "responses.xlsx"
     assert artifact.answered_count == 2
     assert len(artifact.requirements) == 2
+
+
+def test_response_upload_rejects_bad_artifact_shape(monkeypatch):
+    fake_db = FakeDB()
+    app = FastAPI()
+    app.include_router(router, prefix="/api")
+    app.dependency_overrides[get_db] = lambda: fake_db
+    monkeypatch.setattr(
+        "app.api.e4_routes.parse_rfi_response",
+        lambda *_args, **_kwargs: {
+            "artifact_type": "e4_requirements_baseline",
+            "schema_version": 1,
+            "source_filename": "responses.xlsx",
+            "requirements": [
+                {
+                    "question_id": "RFI-001",
+                    "category": "Network",
+                    "question": "Describe the current topology.",
+                    "answer": "Core and access design attached.",
+                    "priority": "must_have",
+                    "expected_answer_type": "text",
+                    "status": "answered",
+                    "gap_reason": None,
+                }
+            ],
+            "answered_count": -1,
+            "gap_count": 0,
+        },
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/e4/OPP-E4-RESPONSE/responses",
+            files={
+                "response_file": (
+                    "responses.xlsx",
+                    _response_workbook(second_answer="250"),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
+        )
+
+    assert response.status_code == 422, response.text
+    assert fake_db.committed is False

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E1Output
+from app.schemas.pipeline import E1Output, deserialize_pipeline_state_outputs
 
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
@@ -24,7 +24,8 @@ def get_e1_output_for_opportunity(opportunity_id: str, db: Session) -> E1Output:
         .filter(PipelineState.opportunity_id == opportunity.id)
         .first()
     )
-    e1_output = (pipeline.step_outputs or {}).get("e1") if pipeline else None
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs if pipeline else None)
+    e1_output = outputs.e1
     if not e1_output:
         raise HTTPException(status_code=404, detail="E1 outputs are not available yet.")
 

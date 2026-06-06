@@ -15,7 +15,12 @@ from app.engines.e4 import run_e4_pipeline
 from app.engines.e4.response_parser import parse_rfi_response
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E4BaselineArtifact
+from app.schemas.pipeline import (
+    E4BaselineArtifact,
+    E4QuestionnaireArtifact,
+    deserialize_pipeline_state_outputs,
+    serialize_pipeline_state_outputs,
+)
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e4" / "output"
@@ -44,7 +49,11 @@ async def generate_rfi(
                 .first()
             )
             if pipeline_state:
-                outputs = dict(pipeline_state.step_outputs or {})
+                outputs = deserialize_pipeline_state_outputs(pipeline_state.step_outputs).model_dump(
+                    mode="json",
+                    by_alias=True,
+                    exclude_none=True,
+                )
                 outputs['e4'] = {
                     'project_name': result.get('project_name', ''),
                     'total_questions': result.get('total_questions', 0),
@@ -52,17 +61,17 @@ async def generate_rfi(
                     'must_have_count': result.get('must_have_count', 0),
                     'nice_to_have_count': result.get('nice_to_have_count', 0),
                     'output_file': result.get('output_file', ''),
+                    'generated_from': result.get('generated_from', 'blank'),
                     'questions': result.get('questions', []),
                 }
-                pipeline_state.step_outputs = outputs
+                pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
                 pipeline_state.current_step = max(pipeline_state.current_step, 11)
                 opportunity.status = 'e4_complete'
                 # Run automated reviewer before engineer sees E4 checkpoint
                 settings = get_settings()
                 review_result = run_e4_reviewer(outputs['e4'], settings.anthropic_api_key)
                 outputs['review_e4'] = review_result
-                pipeline_state.step_outputs = outputs
-                flag_modified(pipeline_state, 'step_outputs')
+                pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
                 db.commit()
     return result
 
@@ -74,7 +83,8 @@ async def upload_rfi_response(
     db: Session = Depends(get_db),
 ):
     opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
-    e4_data = (pipeline.step_outputs or {}).get("e4")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e4_data = outputs.e4.model_dump(mode="json") if outputs.e4 else None
     if not e4_data:
         raise HTTPException(status_code=409, detail="Generate the E4 questionnaire before uploading responses.")
 
@@ -98,10 +108,13 @@ async def upload_rfi_response(
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
-    outputs = dict(pipeline.step_outputs or {})
-    outputs["e4_baseline"] = artifact.model_dump(mode="json")
-    pipeline.step_outputs = outputs
-    flag_modified(pipeline, "step_outputs")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    outputs["e4_baseline"] = artifact
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return E4BaselineArtifact.model_validate(outputs["e4_baseline"])
@@ -146,7 +159,8 @@ def _get_e4_opportunity_and_pipeline(opportunity_id: str, db: Session):
 def get_e4_state(opportunity_id: str, db: Session = Depends(get_db)):
     """Return E4 step outputs and opportunity info."""
     opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
-    e4_data = (pipeline.step_outputs or {}).get("e4")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e4_data = outputs.e4.model_dump(mode="json") if outputs.e4 else None
     if not e4_data:
         raise HTTPException(status_code=404, detail="E4 has not been run for this opportunity.")
     return {
@@ -188,7 +202,8 @@ def approve_e4_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
 def get_e4_review(opportunity_id: str, db: Session = Depends(get_db)):
     """Return the stored E4 review result."""
     _, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
-    result = (pipeline.step_outputs or {}).get("review_e4")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    result = outputs.review_e4
     if not result:
         raise HTTPException(status_code=404, detail="E4 review has not run yet.")
     return result
@@ -200,12 +215,18 @@ def rerun_e4_review(opportunity_id: str, db: Session = Depends(get_db)):
     from app.config import get_settings
     settings = get_settings()
     _, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
-    e4_data = (pipeline.step_outputs or {}).get("e4")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e4_data = outputs.e4.model_dump(mode="json") if outputs.e4 else None
     if not e4_data:
         raise HTTPException(status_code=404, detail="E4 has not been run yet.")
     review_result = run_e4_reviewer(e4_data, settings.anthropic_api_key)
-    pipeline.step_outputs = {**pipeline.step_outputs, "review_e4": review_result}
-    flag_modified(pipeline, "step_outputs")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    outputs["review_e4"] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
     return review_result
 
@@ -215,16 +236,21 @@ class E4RevisionRequest(BaseModel):
 
 
 def _get_e4_revision_count(pipeline: PipelineState) -> int:
-    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    counts = outputs.revision_counts
     return counts.get("e4", 0)
 
 
 def _increment_e4_revision_count(pipeline: PipelineState) -> int:
-    outputs = dict(pipeline.step_outputs or {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     counts = dict(outputs.get("revision_counts", {}))
     counts["e4"] = counts.get("e4", 0) + 1
     outputs["revision_counts"] = counts
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     return counts["e4"]
 
 
@@ -263,13 +289,15 @@ def revise_e4_checkpoint(
 
     new_count = _increment_e4_revision_count(pipeline)
 
-    outputs = dict(pipeline.step_outputs)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     revision_notes = dict(outputs.get("revision_notes", {}))
     revision_notes[f"e4_revision_{new_count}"] = body.engineer_notes
     outputs["revision_notes"] = revision_notes
-    pipeline.step_outputs = outputs
-
-    flag_modified(pipeline, "step_outputs")
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return {

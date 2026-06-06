@@ -40,7 +40,7 @@ def test_generate_hld_fallback_returns_6_sections(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     result = generate_hld({})
     assert isinstance(result, list)
-    assert len(result) == 6
+    assert len(result) == 12
 
 
 def test_generate_hld_fallback_all_hld_level_with_content(monkeypatch):
@@ -59,7 +59,7 @@ def test_generate_lld_fallback_returns_6_sections(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     result = generate_lld({}, hld_sections=[])
     assert isinstance(result, list)
-    assert len(result) == 6
+    assert len(result) == 21
 
 
 def test_generate_lld_fallback_all_lld_level_with_content(monkeypatch):

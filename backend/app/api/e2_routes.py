@@ -15,7 +15,12 @@ from app.config import get_settings
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E2PricingArtifact, E5ComponentArtifact
+from app.schemas.pipeline import (
+    E2PricingArtifact,
+    E5ComponentArtifact,
+    deserialize_pipeline_state_outputs,
+    serialize_pipeline_state_outputs,
+)
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e2" / "output"
@@ -60,13 +65,12 @@ async def analyze_boq(
             .filter(PipelineState.opportunity_id == opportunity.id)
             .first()
         )
-        persisted_e5_components = (
-            (pipeline_state.step_outputs or {}).get("e5_components")
-            if pipeline_state
-            else None
+        outputs = deserialize_pipeline_state_outputs(
+            pipeline_state.step_outputs if pipeline_state else None
         )
+        persisted_e5_components = outputs.e5_components
         if persisted_e5_components:
-            e5_components = E5ComponentArtifact.model_validate(persisted_e5_components)
+            e5_components = persisted_e5_components
         e1_output = get_e1_output_for_opportunity(rfp_session_id.strip(), db)
 
         rfp_texts = [doc.text_content for doc in documents if doc.text_content]
@@ -107,10 +111,13 @@ async def analyze_boq(
             raise HTTPException(status_code=400, detail=f"Invalid BoQ template: {exc}") from exc
 
         if pipeline_state:
-            outputs = dict(pipeline_state.step_outputs or {})
-            pricing_artifact = E2PricingArtifact.model_validate(result["pricing_artifact"])
+            outputs = deserialize_pipeline_state_outputs(pipeline_state.step_outputs).model_dump(
+                mode="json",
+                by_alias=True,
+                exclude_none=True,
+            )
             outputs['e2'] = {
-                **pricing_artifact.model_dump(mode="json"),
+                **result["pricing_artifact"],
                 'matched_count': result.get('matched_count', 0),
                 'unmatched_count': result.get('unmatched_count', 0),
                 'low_confidence_count': result.get('low_confidence_count', 0),
@@ -127,7 +134,7 @@ async def analyze_boq(
                     'selling_pct': selling_pct,
                 },
             }
-            pipeline_state.step_outputs = outputs
+            pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
             if (opportunity.mode or 'rfp') == 'rfi':
                 pipeline_state.current_step = max(pipeline_state.current_step, 22)
                 opportunity.status = 'e2_complete'
@@ -138,8 +145,7 @@ async def analyze_boq(
             settings = get_settings()
             review_result = run_e2_reviewer(outputs['e2'], settings.anthropic_api_key)
             outputs['review_e2'] = review_result
-            pipeline_state.step_outputs = outputs
-            flag_modified(pipeline_state, 'step_outputs')
+            pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
             db.commit()
 
         # Replace full path with just the filename so the caller can use the download endpoint
@@ -189,7 +195,8 @@ def _get_e2_opportunity_and_pipeline(opportunity_id: str, db: Session):
 def get_e2_state(opportunity_id: str, db: Session = Depends(get_db)):
     """Return E2 step outputs and opportunity info."""
     opportunity, pipeline = _get_e2_opportunity_and_pipeline(opportunity_id, db)
-    e2_data = (pipeline.step_outputs or {}).get("e2")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e2_data = outputs.e2.model_dump(mode="json") if outputs.e2 else None
     if not e2_data:
         raise HTTPException(status_code=404, detail="E2 has not been run for this opportunity.")
     return {
@@ -231,7 +238,8 @@ def approve_e2_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
 def get_e2_review(opportunity_id: str, db: Session = Depends(get_db)):
     """Return the stored E2 review result."""
     _, pipeline = _get_e2_opportunity_and_pipeline(opportunity_id, db)
-    result = (pipeline.step_outputs or {}).get("review_e2")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    result = outputs.review_e2
     if not result:
         raise HTTPException(status_code=404, detail="E2 review has not run yet.")
     return result
@@ -243,12 +251,18 @@ def rerun_e2_review(opportunity_id: str, db: Session = Depends(get_db)):
     from app.config import get_settings
     settings = get_settings()
     _, pipeline = _get_e2_opportunity_and_pipeline(opportunity_id, db)
-    e2_data = (pipeline.step_outputs or {}).get("e2")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e2_data = outputs.e2.model_dump(mode="json") if outputs.e2 else None
     if not e2_data:
         raise HTTPException(status_code=404, detail="E2 has not been run yet.")
     review_result = run_e2_reviewer(e2_data, settings.anthropic_api_key)
-    pipeline.step_outputs = {**pipeline.step_outputs, "review_e2": review_result}
-    flag_modified(pipeline, "step_outputs")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    outputs["review_e2"] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
     return review_result
 
@@ -258,16 +272,21 @@ class E2RevisionRequest(BaseModel):
 
 
 def _get_e2_revision_count(pipeline: PipelineState) -> int:
-    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    counts = outputs.revision_counts
     return counts.get("e2", 0)
 
 
 def _increment_e2_revision_count(pipeline: PipelineState) -> int:
-    outputs = dict(pipeline.step_outputs or {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     counts = dict(outputs.get("revision_counts", {}))
     counts["e2"] = counts.get("e2", 0) + 1
     outputs["revision_counts"] = counts
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     return counts["e2"]
 
 
@@ -307,11 +326,15 @@ def revise_e2_checkpoint(
     new_count = _increment_e2_revision_count(pipeline)
 
     # Store engineer notes for audit trail
-    outputs = dict(pipeline.step_outputs)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     revision_notes = dict(outputs.get("revision_notes", {}))
     revision_notes[f"e2_revision_{new_count}"] = body.engineer_notes
     outputs["revision_notes"] = revision_notes
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
 
     flag_modified(pipeline, "step_outputs")
     db.commit()

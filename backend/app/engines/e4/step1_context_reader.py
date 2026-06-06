@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import deserialize_pipeline_state_outputs
 
 
 def read_context(session_id: str | None, db: Session) -> dict:
@@ -43,20 +44,26 @@ def read_context(session_id: str | None, db: Session) -> dict:
 
     rfp_text = "\n\n".join(doc.text_content for doc in documents if doc.text_content)
 
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+
     requirements = [
         {"text": r.get("text", ""), "category": r.get("classification", "")}
-        for r in pipeline.step_outputs.get("3", [])
+        for r in outputs.get("3", [])
     ]
 
     missing_documents = [
         m["referenced_doc"]
-        for m in pipeline.step_outputs.get("2", [])
+        for m in outputs.get("2", [])
         if m.get("referenced_doc")
     ]
 
     legal_traps = [
         f["flag"]
-        for f in pipeline.step_outputs.get("4", [])
+        for f in outputs.get("4", [])
         if f.get("flag")
     ]
 

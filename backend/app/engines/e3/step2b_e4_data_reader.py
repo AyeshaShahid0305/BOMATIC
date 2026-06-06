@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E4BaselineArtifact
+from app.schemas.pipeline import deserialize_pipeline_state_outputs
 
 
 def read_e4_data(session_id: str, db: Session) -> dict:
@@ -19,11 +19,11 @@ def read_e4_data(session_id: str, db: Session) -> dict:
         .filter(PipelineState.opportunity_id == opportunity.id)
         .first()
     )
-    persisted = (pipeline.step_outputs or {}).get("e4_baseline") if pipeline else None
-    if not persisted:
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs if pipeline else None)
+    artifact = outputs.e4_baseline
+    if not artifact:
         return {"requirements": [], "gaps": [], "artifact": None}
 
-    artifact = E4BaselineArtifact.model_validate(persisted)
     requirements = [
         {
             "text": f"{requirement.question}: {requirement.answer}",

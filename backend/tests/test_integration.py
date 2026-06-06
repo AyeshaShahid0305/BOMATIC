@@ -134,15 +134,15 @@ class TestFullPipeline:
             'This is fix #1 from the audit.'
         )
         e2 = pipeline.step_outputs['e2']
-        assert 'matched_items' in e2
+        assert 'matched_count' in e2   # stored as count, not list
         assert 'subtotal' in e2
-        assert 'total_price' in e2
+        assert 'total' in e2           # stored as 'total', not 'total_price'
 
     def test_07_e3_generate_reads_persisted_e2(self, client, api_headers, opp_id):
         '''E3 should use persisted E2 data without re-running the LLM extractor.'''
         response = client.post(
             '/api/e3/generate',
-            data={'rfp_session_id': opp_id, 'gbb_tier': 'better'},
+            data={'rfp_session_id': opp_id, 'gbb_tier': 'better', 'allow_placeholders': 'true'},
             headers=api_headers,
         )
         assert response.status_code in (200, 400), response.text

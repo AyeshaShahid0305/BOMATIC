@@ -27,7 +27,7 @@ from app.api.reviewer import run_cp1_reviewer, run_cp2_reviewer
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E1Output
+from app.schemas.pipeline import E1Output, deserialize_pipeline_state_outputs, serialize_pipeline_state_outputs
 
 """E1 Pipeline — Step Numbering
 Steps 1–4  (run_e1_pipeline):       file intake, classification, extraction, legal trap detection
@@ -173,26 +173,34 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
     requirements_payload = [dataclasses.asdict(r) for r in reqs]
     flags_payload = [dataclasses.asdict(f) for f in flags]
 
-    # Persist: assign new dict so SQLAlchemy detects the change on the JSONB column
-    pipeline.step_outputs = {
-        **pipeline.step_outputs,
-        "1": step1_results,
-        "2": [dataclasses.asdict(m) for m in missing],
-        "3": requirements_payload,
-        "4": flags_payload,
-        "5": eval_criteria,
-        "e1": _build_e1_output(
-            texts=texts,
-            requirements=requirements_payload,
-            risk_flags=flags_payload,
-        ),
-    }
+    # Persist: validate the full JSONB payload before assigning it to the database column.
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    outputs.update(
+        {
+            "1": step1_results,
+            "2": [dataclasses.asdict(m) for m in missing],
+            "3": requirements_payload,
+            "4": flags_payload,
+            "5": eval_criteria,
+            "e1": _build_e1_output(
+                texts=texts,
+                requirements=requirements_payload,
+                risk_flags=flags_payload,
+            ),
+        }
+    )
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     pipeline.current_step = 4
     opportunity.status = "checkpoint_1_pending"
 
     # Run automated reviewer before engineer sees Checkpoint 1
-    review_result = run_cp1_reviewer(pipeline.step_outputs, settings.anthropic_api_key)
-    pipeline.step_outputs = {**pipeline.step_outputs, "review_cp1": review_result}
+    review_result = run_cp1_reviewer(outputs, settings.anthropic_api_key)
+    outputs["review_cp1"] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
 
     db.commit()
 
@@ -225,11 +233,13 @@ def get_pipeline_state(opportunity_id: str, db: Session = Depends(get_db)):
     if not pipeline:
         raise HTTPException(status_code=404, detail="Pipeline state not found for this opportunity.")
 
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+
     return {
         "opportunity_id": opportunity_id,
         "status": opportunity.status,
         "current_step": pipeline.current_step,
-        "step_outputs": pipeline.step_outputs,
+        "step_outputs": serialize_pipeline_state_outputs(outputs),
         "updated_at": pipeline.updated_at.isoformat(),
     }
 
@@ -282,7 +292,12 @@ async def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)
             detail=f"Checkpoint 1 already approved (current_step={pipeline.current_step}).",
         )
 
-    requirements: list[dict] = pipeline.step_outputs.get("3", [])
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    requirements: list[dict] = outputs.get("3", [])
     if not requirements:
         raise HTTPException(status_code=400, detail="No requirements found in pipeline state. Re-run Steps 1–4.")
 
@@ -315,30 +330,33 @@ async def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)
     link_tp_sections(matrix_result["matrix_rows"])
 
     # Persist
-    e1_existing = pipeline.step_outputs.get("e1", {})
+    e1_existing = outputs.get("e1", {})
     e1_requirements = e1_existing.get("requirements_baseline") or requirements
-    e1_risk_flags = e1_existing.get("risk_flags") or pipeline.step_outputs.get("4", [])
-    pipeline.step_outputs = {
-        **pipeline.step_outputs,
-        "8": sector_result,
-        "9": frameworks,
-        "10": matrix_result["matrix_rows"],
-        "gaps": matrix_result["gaps"],
-        "stats": matrix_result["stats"],
-        "e1": _build_e1_output(
-            texts=texts,
-            requirements=e1_requirements,
-            risk_flags=e1_risk_flags,
-            sector=sector_result["sector"],
-            frameworks_selected=frameworks,
-        ),
-    }
+    e1_risk_flags = e1_existing.get("risk_flags") or outputs.get("4", [])
+    outputs.update(
+        {
+            "8": sector_result,
+            "9": frameworks,
+            "10": matrix_result["matrix_rows"],
+            "gaps": matrix_result["gaps"],
+            "stats": matrix_result["stats"],
+            "e1": _build_e1_output(
+                texts=texts,
+                requirements=e1_requirements,
+                risk_flags=e1_risk_flags,
+                sector=sector_result["sector"],
+                frameworks_selected=frameworks,
+            ),
+        }
+    )
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     pipeline.current_step = 11
     opportunity.status = "checkpoint_2_pending"
 
     # Run automated reviewer before engineer sees Checkpoint 2
-    review_result = run_cp2_reviewer(pipeline.step_outputs, settings.anthropic_api_key)
-    pipeline.step_outputs = {**pipeline.step_outputs, "review_cp2": review_result}
+    review_result = run_cp2_reviewer(outputs, settings.anthropic_api_key)
+    outputs["review_cp2"] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
 
     db.commit()
 
@@ -369,9 +387,14 @@ async def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)
             detail=f"Checkpoint 1 not yet approved (current_step={pipeline.current_step}).",
         )
 
-    matrix_rows: list[dict] = pipeline.step_outputs.get("10", [])
-    gaps: dict = pipeline.step_outputs.get("gaps", {"coverage_gaps": [], "orphan_requirements": []})
-    stats: dict = pipeline.step_outputs.get("stats", {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    matrix_rows: list[dict] = outputs.get("10", [])
+    gaps: dict = outputs.get("gaps", {"coverage_gaps": [], "orphan_requirements": []})
+    stats: dict = outputs.get("stats", {})
 
     output_dir = Path(settings.upload_dir) / opportunity_id
     xlsx_path = await asyncio.get_running_loop().run_in_executor(
@@ -387,7 +410,7 @@ async def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)
     )
 
     # Generate requirements baseline DOCX alongside the compliance matrix
-    requirements: list[dict] = pipeline.step_outputs.get("3", [])
+    requirements: list[dict] = outputs.get("3", [])
     requirements_docx_path = write_requirements_docx(
         requirements=requirements,
         opportunity_id=opportunity_id,
@@ -395,11 +418,9 @@ async def checkpoint2_approve(opportunity_id: str, db: Session = Depends(get_db)
         output_dir=output_dir,
     )
 
-    pipeline.step_outputs = {
-        **pipeline.step_outputs,
-        "xlsx_path": str(xlsx_path),
-        "requirements_docx_path": str(requirements_docx_path),
-    }
+    outputs["xlsx_path"] = str(xlsx_path)
+    outputs["requirements_docx_path"] = str(requirements_docx_path)
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     pipeline.current_step = 12
     opportunity.status = "e1_complete"
     db.commit()
@@ -426,11 +447,12 @@ def get_matrix(opportunity_id: str, db: Session = Depends(get_db)):
             detail="Compliance matrix not yet generated. Complete Checkpoint 1 first.",
         )
 
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
     return {
         "opportunity_id": opportunity_id,
-        "matrix_rows": pipeline.step_outputs.get("10", []),
-        "gaps": pipeline.step_outputs.get("gaps", {}),
-        "stats": pipeline.step_outputs.get("stats", {}),
+        "matrix_rows": outputs.model_dump(mode="json", by_alias=True, exclude_none=True).get("10", []),
+        "gaps": outputs.gaps,
+        "stats": outputs.stats,
     }
 
 
@@ -439,7 +461,8 @@ def download_matrix(opportunity_id: str, db: Session = Depends(get_db)):
     """Download the compliance matrix .xlsx file."""
     opportunity, pipeline = _get_opportunity_and_pipeline(opportunity_id, db)
 
-    xlsx_path_str: str = pipeline.step_outputs.get("xlsx_path", "")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    xlsx_path_str: str = outputs.xlsx_path
     if not xlsx_path_str:
         raise HTTPException(
             status_code=404,
@@ -473,7 +496,12 @@ def patch_matrix_row(
             detail="Compliance matrix not yet generated. Complete Checkpoint 1 first.",
         )
 
-    matrix_rows: list[dict] = pipeline.step_outputs.get("10", [])
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    matrix_rows: list[dict] = outputs.get("10", [])
 
     matching = [r for r in matrix_rows if r.get("req_id") == req_id]
     if not matching:
@@ -485,7 +513,8 @@ def patch_matrix_row(
             row.update(update)
 
     # Assign a new dict so SQLAlchemy detects the change on the JSONB column
-    pipeline.step_outputs = {**pipeline.step_outputs, "10": matrix_rows}
+    outputs["10"] = matrix_rows
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return matching[0]
@@ -493,7 +522,8 @@ def patch_matrix_row(
 
 def _get_revision_count(pipeline: PipelineState, checkpoint: str) -> int:
     """Return the current revision count for a checkpoint key ('cp1' or 'cp2')."""
-    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    counts = outputs.revision_counts
     return counts.get(checkpoint, 0)
 
 
@@ -503,11 +533,15 @@ def _increment_revision_count(pipeline: PipelineState, checkpoint: str) -> int:
     Returns the NEW count after incrementing.
     Assigns a new dict to step_outputs so SQLAlchemy detects the JSONB change.
     """
-    outputs = dict(pipeline.step_outputs or {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     counts = dict(outputs.get("revision_counts", {}))
     counts[checkpoint] = counts.get(checkpoint, 0) + 1
     outputs["revision_counts"] = counts
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     return counts[checkpoint]
 
 
@@ -570,7 +604,11 @@ async def checkpoint1_revise(
 
     new_count = _increment_revision_count(pipeline, "cp1")
 
-    outputs = dict(pipeline.step_outputs)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
 
     revision_notes = dict(outputs.get("revision_notes", {}))
     revision_notes[f"cp1_revision_{new_count}"] = body.engineer_notes
@@ -588,7 +626,7 @@ async def checkpoint1_revise(
         frameworks_selected=e1_existing.get("frameworks_selected", []),
     )
 
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return {
@@ -638,7 +676,12 @@ async def checkpoint2_revise(
             detail=f"Maximum revisions ({MAX_REVISIONS}) reached for Checkpoint 2. Edit output files manually before approving.",
         )
 
-    requirements: list[dict] = (pipeline.step_outputs or {}).get("3", [])
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    requirements: list[dict] = outputs.get("3", [])
     if not requirements:
         raise HTTPException(
             status_code=400,
@@ -676,7 +719,11 @@ async def checkpoint2_revise(
 
     new_count = _increment_revision_count(pipeline, "cp2")
 
-    outputs = dict(pipeline.step_outputs)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
 
     revision_notes = dict(outputs.get("revision_notes", {}))
     revision_notes[f"cp2_revision_{new_count}"] = body.engineer_notes
@@ -697,7 +744,7 @@ async def checkpoint2_revise(
         frameworks_selected=frameworks,
     )
 
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return {
@@ -730,7 +777,8 @@ def get_review_result(
     opportunity, pipeline = _get_opportunity_and_pipeline(opportunity_id, db)
 
     key = f"review_{checkpoint}"
-    result = (pipeline.step_outputs or {}).get(key)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    result = outputs.model_dump(mode="json", by_alias=True, exclude_none=True).get(key)
     if not result:
         raise HTTPException(
             status_code=404,
@@ -756,7 +804,11 @@ async def rerun_review(
     settings = get_settings()
     opportunity, pipeline = _get_opportunity_and_pipeline(opportunity_id, db)
 
-    step_outputs = pipeline.step_outputs or {}
+    step_outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
 
     if checkpoint == "cp1":
         if pipeline.current_step < 4:
@@ -769,7 +821,8 @@ async def rerun_review(
         review_result = run_cp2_reviewer(step_outputs, settings.anthropic_api_key)
         key = "review_cp2"
 
-    pipeline.step_outputs = {**step_outputs, key: review_result}
+    step_outputs[key] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(step_outputs)
     db.commit()
 
     return review_result

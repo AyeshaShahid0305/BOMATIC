@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import deserialize_pipeline_state_outputs
 
 
 def read_e1_data(session_id: str, db: Session) -> dict:
@@ -33,8 +34,14 @@ def read_e1_data(session_id: str, db: Session) -> dict:
 
     rfp_text = "\n\n".join(doc.text_content for doc in documents if doc.text_content)
 
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+
     # Build a req_id -> compliance status lookup from the matrix (step 10), if available
-    matrix_rows: list[dict] = pipeline.step_outputs.get("10", [])
+    matrix_rows: list[dict] = outputs.get("10", [])
     compliance_by_req_id = {row["req_id"]: row["status"] for row in matrix_rows if "req_id" in row}
 
     requirements = [
@@ -43,18 +50,18 @@ def read_e1_data(session_id: str, db: Session) -> dict:
             "category": r.get("classification", ""),
             "compliance_status": compliance_by_req_id.get(r.get("id", "")),
         }
-        for r in pipeline.step_outputs.get("3", [])
+        for r in outputs.get("3", [])
     ]
 
     legal_traps = [
         f["flag"]
-        for f in pipeline.step_outputs.get("4", [])
+        for f in outputs.get("4", [])
         if f.get("flag")
     ]
 
     missing_documents = [
         m["referenced_doc"]
-        for m in pipeline.step_outputs.get("2", [])
+        for m in outputs.get("2", [])
         if m.get("referenced_doc")
     ]
 

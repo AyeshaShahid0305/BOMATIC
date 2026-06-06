@@ -20,7 +20,12 @@ from app.engines.e3.step5_assembler import ProposalIncompleteError
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E2PricingArtifact
+from app.schemas.pipeline import (
+    E2PricingArtifact,
+    E3ProposalArtifact,
+    deserialize_pipeline_state_outputs,
+    serialize_pipeline_state_outputs,
+)
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e3" / "output"
 
@@ -58,7 +63,10 @@ async def generate_proposal(
         .filter(PipelineState.opportunity_id == opportunity.id)
         .first()
     )
-    persisted_e2 = (pipeline_state.step_outputs or {}).get('e2') if pipeline_state else None
+    outputs = deserialize_pipeline_state_outputs(
+        pipeline_state.step_outputs if pipeline_state else None
+    )
+    persisted_e2 = outputs.e2.model_dump(mode="json") if outputs.e2 else None
     pricing_summary = None
 
     if persisted_e2:
@@ -98,22 +106,32 @@ async def generate_proposal(
             allow_placeholders=allow_placeholders,
         )
         if pipeline_state:
-            outputs = dict(pipeline_state.step_outputs or {})
+            outputs = deserialize_pipeline_state_outputs(pipeline_state.step_outputs).model_dump(
+                mode="json",
+                by_alias=True,
+                exclude_none=True,
+            )
             outputs['e3'] = {
                 'project_name': result.get('project_name', ''),
                 'section_count': result.get('section_count', 0),
                 'output_file': result.get('output_file', ''),
                 'pdf_file': result.get('pdf_file') or '',
+                'gbb_tier': result.get('gbb_tier', gbb_tier),
+                'gbb_multiplier': result.get('gbb_multiplier', 1.0),
+                'total_price': result.get('total_price', 0.0),
+                'ai_generated_count': result.get('ai_generated_count', 0),
+                'e4_requirement_count': result.get('e4_requirement_count', 0),
+                'e4_gap_count': result.get('e4_gap_count', 0),
+                'e5_component_count': result.get('e5_component_count', 0),
             }
-            pipeline_state.step_outputs = outputs
+            pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
             pipeline_state.current_step = max(pipeline_state.current_step, 23)
             opportunity.status = 'e3_complete'
             # Run automated reviewer before engineer sees E3 checkpoint
             settings = get_settings()
             review_result = run_e3_reviewer(outputs['e3'], settings.anthropic_api_key)
             outputs['review_e3'] = review_result
-            pipeline_state.step_outputs = outputs
-            flag_modified(pipeline_state, 'step_outputs')
+            pipeline_state.step_outputs = serialize_pipeline_state_outputs(outputs)
             db.commit()
         return result
     except ProposalIncompleteError as exc:
@@ -168,7 +186,8 @@ def _get_e3_opportunity_and_pipeline(opportunity_id: str, db: Session):
 def get_e3_state(opportunity_id: str, db: Session = Depends(get_db)):
     """Return E3 step outputs and opportunity info."""
     opportunity, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
-    e3_data = (pipeline.step_outputs or {}).get("e3")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e3_data = outputs.e3.model_dump(mode="json") if outputs.e3 else None
     if not e3_data:
         raise HTTPException(status_code=404, detail="E3 has not been run for this opportunity.")
     return {
@@ -210,7 +229,8 @@ def approve_e3_checkpoint(opportunity_id: str, db: Session = Depends(get_db)):
 def get_e3_review(opportunity_id: str, db: Session = Depends(get_db)):
     """Return the stored E3 review result."""
     _, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
-    result = (pipeline.step_outputs or {}).get("review_e3")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    result = outputs.review_e3
     if not result:
         raise HTTPException(status_code=404, detail="E3 review has not run yet.")
     return result
@@ -222,12 +242,18 @@ def rerun_e3_review(opportunity_id: str, db: Session = Depends(get_db)):
     from app.config import get_settings
     settings = get_settings()
     _, pipeline = _get_e3_opportunity_and_pipeline(opportunity_id, db)
-    e3_data = (pipeline.step_outputs or {}).get("e3")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    e3_data = outputs.e3.model_dump(mode="json") if outputs.e3 else None
     if not e3_data:
         raise HTTPException(status_code=404, detail="E3 has not been run yet.")
     review_result = run_e3_reviewer(e3_data, settings.anthropic_api_key)
-    pipeline.step_outputs = {**pipeline.step_outputs, "review_e3": review_result}
-    flag_modified(pipeline, "step_outputs")
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    outputs["review_e3"] = review_result
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
     return review_result
 
@@ -237,16 +263,21 @@ class E3RevisionRequest(BaseModel):
 
 
 def _get_e3_revision_count(pipeline: PipelineState) -> int:
-    counts = (pipeline.step_outputs or {}).get("revision_counts", {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs)
+    counts = outputs.revision_counts
     return counts.get("e3", 0)
 
 
 def _increment_e3_revision_count(pipeline: PipelineState) -> int:
-    outputs = dict(pipeline.step_outputs or {})
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     counts = dict(outputs.get("revision_counts", {}))
     counts["e3"] = counts.get("e3", 0) + 1
     outputs["revision_counts"] = counts
-    pipeline.step_outputs = outputs
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     return counts["e3"]
 
 
@@ -285,13 +316,15 @@ def revise_e3_checkpoint(
 
     new_count = _increment_e3_revision_count(pipeline)
 
-    outputs = dict(pipeline.step_outputs)
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
     revision_notes = dict(outputs.get("revision_notes", {}))
     revision_notes[f"e3_revision_{new_count}"] = body.engineer_notes
     outputs["revision_notes"] = revision_notes
-    pipeline.step_outputs = outputs
-
-    flag_modified(pipeline, "step_outputs")
+    pipeline.step_outputs = serialize_pipeline_state_outputs(outputs)
     db.commit()
 
     return {

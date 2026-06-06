@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E5ComponentArtifact
+from app.schemas.pipeline import deserialize_pipeline_state_outputs
 
 
 def read_e5_data(session_id: str, db: Session) -> dict:
@@ -19,11 +19,10 @@ def read_e5_data(session_id: str, db: Session) -> dict:
         .filter(PipelineState.opportunity_id == opportunity.id)
         .first()
     )
-    persisted = (pipeline.step_outputs or {}).get("e5_components") if pipeline else None
-    if not persisted:
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs if pipeline else None)
+    artifact = outputs.e5_components
+    if not artifact:
         return {"components": [], "artifact": None}
-
-    artifact = E5ComponentArtifact.model_validate(persisted)
     return {
         "components": [
             component.model_dump(mode="json")

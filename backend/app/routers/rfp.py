@@ -8,11 +8,13 @@ from fastapi import APIRouter, Depends, Form, Header, HTTPException, UploadFile,
 from fastapi.responses import FileResponse
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+from app.api.deps import get_current_user
 from app.db import get_db
 from app.config import get_settings
 from app.models.opportunity import Opportunity
 from app.models.document import Document
 from app.models.pipeline_state import PipelineState
+from app.models.user import User
 
 router = APIRouter(tags=["rfp"])
 
@@ -80,6 +82,11 @@ def _reject_unsafe_filename(filename: str) -> None:
     path = Path(filename)
     if filename != path.name or ".." in path.parts or ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename.")
+
+
+def _require_opportunity_owner(opportunity: Opportunity, current_user: User) -> None:
+    if opportunity.user_id != str(current_user.id):
+        raise HTTPException(status_code=403, detail="You do not have access to this opportunity.")
 
 
 def _collect_outputs(pipeline: PipelineState | None) -> list[dict]:
@@ -267,7 +274,7 @@ async def upload_rfp_package(
             payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
             owner_id = payload.get("sub")
         except JWTError:
-            pass  # Invalid token - treat as anonymous upload
+            raise HTTPException(status_code=401, detail="Invalid or expired token.")
 
     # Persist opportunity
     opportunity = Opportunity(
@@ -325,28 +332,16 @@ async def upload_rfp_package(
 
 @router.get("/opportunities")
 def list_opportunities(
-    authorization: Optional[str] = Header(default=None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Return opportunities. Filters by owner when a valid JWT is present."""
-    owner_id: Optional[str] = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.removeprefix("Bearer ").strip()
-        try:
-            settings = get_settings()
-            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-            owner_id = payload.get("sub")
-        except JWTError:
-            pass
-
+    """Return opportunities owned by the authenticated user."""
     query = (
         db.query(Opportunity, PipelineState)
         .join(PipelineState, PipelineState.opportunity_id == Opportunity.id)
+        .filter(Opportunity.user_id == str(current_user.id))
         .order_by(Opportunity.created_at.desc())
     )
-
-    if owner_id:
-        query = query.filter(Opportunity.user_id == owner_id)
 
     rows = query.all()
 
@@ -367,7 +362,11 @@ def list_opportunities(
 
 
 @router.get("/rfp/packages/{opportunity_id}")
-def get_rfp_package(opportunity_id: str, db: Session = Depends(get_db)):
+def get_rfp_package(
+    opportunity_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Retrieve an uploaded RFP package with its document list and pipeline status."""
     opportunity = (
         db.query(Opportunity)
@@ -376,6 +375,7 @@ def get_rfp_package(opportunity_id: str, db: Session = Depends(get_db)):
     )
     if not opportunity:
         raise HTTPException(status_code=404, detail=f"Opportunity '{opportunity_id}' not found.")
+    _require_opportunity_owner(opportunity, current_user)
 
     documents = (
         db.query(Document)
@@ -411,7 +411,11 @@ def get_rfp_package(opportunity_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/rfp/packages/{opportunity_id}/outputs")
-def list_outputs(opportunity_id: str, db: Session = Depends(get_db)):
+def list_outputs(
+    opportunity_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Return downloadable logical output files for an opportunity."""
     opportunity = (
         db.query(Opportunity)
@@ -420,6 +424,7 @@ def list_outputs(opportunity_id: str, db: Session = Depends(get_db)):
     )
     if not opportunity:
         raise HTTPException(status_code=404, detail=f"Opportunity '{opportunity_id}' not found.")
+    _require_opportunity_owner(opportunity, current_user)
 
     pipeline = (
         db.query(PipelineState)
@@ -450,7 +455,12 @@ def list_outputs(opportunity_id: str, db: Session = Depends(get_db)):
 
 
 @router.api_route("/rfp/packages/{opportunity_id}/outputs/{filename:path}", methods=["GET", "HEAD"])
-def download_output(opportunity_id: str, filename: str, db: Session = Depends(get_db)):
+def download_output(
+    opportunity_id: str,
+    filename: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Download a generated engine output by logical filename."""
     if "/" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename.")
@@ -462,6 +472,7 @@ def download_output(opportunity_id: str, filename: str, db: Session = Depends(ge
     )
     if not opportunity:
         raise HTTPException(status_code=404, detail=f"Opportunity '{opportunity_id}' not found.")
+    _require_opportunity_owner(opportunity, current_user)
 
     pipeline = (
         db.query(PipelineState)

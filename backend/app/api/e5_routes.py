@@ -11,6 +11,7 @@ from app.db import get_db
 from app.engines.e5 import run_e5_pipeline
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import E5ComponentArtifact
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e5" / "output"
@@ -39,11 +40,13 @@ async def generate_design(
         )
         if pipeline_state:
             outputs = dict(pipeline_state.step_outputs or {})
+            component_artifact = E5ComponentArtifact.model_validate(result["component_artifact"])
             outputs['e5'] = {
                 'project_name': result.get('project_name', ''),
                 'total_sections': result.get('total_sections', 0),
                 'output_file': result.get('output_file', ''),
             }
+            outputs["e5_components"] = component_artifact.model_dump(mode="json")
             pipeline_state.step_outputs = outputs
             pipeline_state.current_step = max(pipeline_state.current_step, 21)
             opportunity.status = 'e5_complete'

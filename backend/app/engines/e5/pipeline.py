@@ -3,6 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from .models import DesignDocument
+from .component_extractor import extract_components
 from .step1_context_reader import read_context
 from .step2_hld_generator import generate_hld
 from .step3_lld_generator import generate_lld
@@ -13,6 +14,7 @@ def run_e5_pipeline(session_id: Optional[str], db: Session) -> dict:
     context = read_context(session_id, db)
     hld_sections = generate_hld(context)
     lld_sections = generate_lld(context, hld_sections)
+    component_artifact = extract_components(hld_sections, lld_sections)
 
     doc = DesignDocument(
         project_name=context["project_name"],
@@ -30,4 +32,6 @@ def run_e5_pipeline(session_id: Optional[str], db: Session) -> dict:
         "lld_section_count": len(lld_sections),
         "generated_from": doc.generated_from,
         "total_sections": len(hld_sections) + len(lld_sections),
+        "component_artifact": component_artifact.model_dump(mode="json"),
+        "components": component_artifact.model_dump(mode="json")["components"],
     }

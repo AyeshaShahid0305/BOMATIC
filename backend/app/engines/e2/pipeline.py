@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.schemas.pipeline import E1Output
+from app.schemas.pipeline import E1Output, E2PricingArtifact, E5ComponentArtifact
 
 from .step1_rfp_extractor import extract_rfp_requirements
 from .step1_template_detector import detect_template
@@ -32,13 +32,30 @@ def _items_from_e1_output(e1_output: E1Output) -> list[RFPLineItem]:
     return items
 
 
+def _items_from_e5_components(artifact: E5ComponentArtifact) -> list[RFPLineItem]:
+    return [
+        RFPLineItem(
+            description=component.description,
+            quantity=component.quantity,
+            unit=component.unit,
+            category=component.category,
+            raw_text=component.description,
+            confidence=1.0,
+        )
+        for component in artifact.components
+    ]
+
+
 def run_e2_pipeline(
     rfp_text: str,
     template_path: Path,
     e1_output: E1Output | None = None,
+    e5_components: E5ComponentArtifact | None = None,
     cost_config: dict | None = None,
 ) -> dict:
     rfp_items = _items_from_e1_output(e1_output) if e1_output else extract_rfp_requirements(rfp_text)
+    if e5_components:
+        rfp_items.extend(_items_from_e5_components(e5_components))
 
     detection = detect_template(template_path)
     boq_items = parse_boq(template_path, detection)
@@ -50,6 +67,7 @@ def run_e2_pipeline(
     eox_warnings = check_eox(matched_skus)
 
     summary = analyze_gaps(matches)
+    pricing_artifact = E2PricingArtifact.from_pricing_summary(summary)
 
     # CS-001 - CS-009 cost stack
     effective_config = cost_config if cost_config is not None else load_defaults()
@@ -78,4 +96,5 @@ def run_e2_pipeline(
         "boq_items": boq_items,
         "eox_warnings": eox_warnings,
         "cost_stack": cost_stack_result["summary"],
+        "pricing_artifact": pricing_artifact.model_dump(mode="json"),
     }

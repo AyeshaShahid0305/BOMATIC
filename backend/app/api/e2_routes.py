@@ -15,7 +15,7 @@ from app.config import get_settings
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
-from app.schemas.pipeline import E2PricingArtifact
+from app.schemas.pipeline import E2PricingArtifact, E5ComponentArtifact
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e2" / "output"
@@ -37,6 +37,7 @@ async def analyze_boq(
 ):
     pipeline_state = None
     e1_output = None
+    e5_components = None
 
     if rfp_session_id.strip():
         opportunity = (
@@ -58,6 +59,13 @@ async def analyze_boq(
             .filter(PipelineState.opportunity_id == opportunity.id)
             .first()
         )
+        persisted_e5_components = (
+            (pipeline_state.step_outputs or {}).get("e5_components")
+            if pipeline_state
+            else None
+        )
+        if persisted_e5_components:
+            e5_components = E5ComponentArtifact.model_validate(persisted_e5_components)
         e1_output = get_e1_output_for_opportunity(rfp_session_id.strip(), db)
 
         rfp_texts = [doc.text_content for doc in documents if doc.text_content]
@@ -90,6 +98,7 @@ async def analyze_boq(
                 rfp_text,
                 template_path,
                 e1_output=e1_output,
+                e5_components=e5_components,
                 cost_config=cost_config,
             )
         except Exception as exc:

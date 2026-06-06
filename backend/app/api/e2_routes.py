@@ -15,6 +15,7 @@ from app.config import get_settings
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import E2PricingArtifact
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e2" / "output"
@@ -96,18 +97,14 @@ async def analyze_boq(
 
         if pipeline_state:
             outputs = dict(pipeline_state.step_outputs or {})
+            pricing_artifact = E2PricingArtifact.model_validate(result["pricing_artifact"])
             outputs['e2'] = {
+                **pricing_artifact.model_dump(mode="json"),
                 'matched_count': result.get('matched_count', 0),
                 'unmatched_count': result.get('unmatched_count', 0),
                 'low_confidence_count': result.get('low_confidence_count', 0),
-                'subtotal': result.get('subtotal', 0),
-                'discount_amount': result.get('discount_amount', 0),
-                'total': result.get('total', 0),
-                'currency': result.get('currency', 'USD'),
                 'vendor_list': result.get('vendor_list', []),
-                'requirements_baseline_count': result.get('requirements_baseline_count', 0),
                 'output_file': Path(result['output_file']).name,
-                'distributor_file': result.get('distributor_file') or '',
                 'eox_warnings': result.get('eox_warnings', []),
                 'cost_stack': result.get('cost_stack', {}),
                 'cost_config': {

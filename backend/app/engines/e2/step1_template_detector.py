@@ -9,7 +9,9 @@ _CISCO_SKU_RE = re.compile(r"^[A-Z][A-Z0-9]{1,}-[A-Z0-9]")
 
 FORMAT_1_CCW = "FORMAT_1_CCW"
 UNKNOWN = "UNKNOWN"
-FORMAT_2_ARAMCO = "FORMAT_2_ARAMCO"
+FORMAT_2_ARAMCO_2022 = "FORMAT_2_ARAMCO_2022"
+FORMAT_2_ARAMCO_2024 = "FORMAT_2_ARAMCO_2024"
+FORMAT_2_ARAMCO = FORMAT_2_ARAMCO_2022
 FORMAT_3_NTT = "FORMAT_3_NTT"
 
 
@@ -62,23 +64,34 @@ def detect_template(file_path: Path) -> BoQDetectionResult:
 
         # 4. Aramco format — sheet name or header pattern
         ARAMCO_SHEET_NAMES = {'boq', 'bill of quantities', 'boq sheet', 'price schedule', 'price list'}
-        ARAMCO_HEADERS = {'item no', 'item description', 'unit rate', 'quantity', 'amount'}
         for name in sheet_names:
-            if name.lower() in ARAMCO_SHEET_NAMES:
+            ws = wb[name]
+            header_row = [_normalize_header(h) for h in _get_row_values(ws, 1)]
+            if _contains_headers(
+                header_row,
+                {"item no", "material number", "item description", "quantity", "unit rate", "amount"},
+            ):
                 return BoQDetectionResult(
-                    format_type=FORMAT_2_ARAMCO,
+                    format_type=FORMAT_2_ARAMCO_2024,
+                    confidence=0.95,
+                    sheet_name=name,
+                    header_row_index=0,
+                )
+            if _contains_headers(
+                header_row,
+                {"material number", "item description", "quantity", "unit rate", "amount"},
+            ):
+                return BoQDetectionResult(
+                    format_type=FORMAT_2_ARAMCO_2022,
                     confidence=0.9,
                     sheet_name=name,
                     header_row_index=0,
                 )
         for name in sheet_names:
-            ws = wb[name]
-            header_row = [h.lower() for h in _get_row_values(ws, 1)]
-            matched = sum(1 for h in ARAMCO_HEADERS if any(h in cell for cell in header_row))
-            if matched >= 3:
+            if name.lower() in ARAMCO_SHEET_NAMES:
                 return BoQDetectionResult(
-                    format_type=FORMAT_2_ARAMCO,
-                    confidence=0.7 + 0.05 * matched,
+                    format_type=FORMAT_2_ARAMCO_2022,
+                    confidence=0.75,
                     sheet_name=name,
                     header_row_index=0,
                 )
@@ -129,6 +142,14 @@ def _get_cell_value(ws, row: int, col: int):
         if i == 1:
             return r[0]
     return None
+
+
+def _normalize_header(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _contains_headers(actual: list[str], required: set[str]) -> bool:
+    return required.issubset(set(actual))
 
 
 if __name__ == "__main__":

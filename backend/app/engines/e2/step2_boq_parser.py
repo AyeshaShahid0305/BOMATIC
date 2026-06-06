@@ -4,8 +4,36 @@ from pathlib import Path
 import openpyxl
 
 from .models import BoQDetectionResult, BoQLineItem
+from .step1_template_detector import (
+    FORMAT_1_CCW,
+    FORMAT_2_ARAMCO_2022,
+    FORMAT_2_ARAMCO_2024,
+    FORMAT_3_NTT,
+    UNKNOWN,
+)
 
 _CISCO_SKU_RE = re.compile(r"^[A-Z][A-Z0-9]{1,}-[A-Z0-9]")
+
+COLUMN_MAPPINGS = {
+    FORMAT_1_CCW: {"part_number": 0, "description": 1, "qty": 2, "unit_price": 3, "total_price": 4},
+    FORMAT_2_ARAMCO_2022: {"part_number": 1, "description": 2, "qty": 3, "unit_price": 4, "total_price": 5},
+    FORMAT_2_ARAMCO_2024: {"part_number": 2, "description": 3, "qty": 4, "unit_price": 5, "total_price": 6},
+    FORMAT_3_NTT: {"part_number": 1, "description": 2, "qty": 3, "unit_price": 4, "total_price": 6},
+    UNKNOWN: {"part_number": 0, "description": 1, "qty": 2, "unit_price": 3, "total_price": 4},
+}
+
+
+def _mapped_value(row: tuple, mapping: dict[str, int], field: str):
+    index = mapping[field]
+    return row[index] if index < len(row) else None
+
+
+def _number(value) -> float:
+    if value is None or value == "":
+        return 0.0
+    if isinstance(value, str):
+        value = value.replace(",", "").replace("$", "").strip()
+    return float(value)
 
 
 def parse(file_path: Path, detection: BoQDetectionResult) -> list[BoQLineItem]:
@@ -19,9 +47,14 @@ def parse(file_path: Path, detection: BoQDetectionResult) -> list[BoQLineItem]:
         for _ in range(detection.header_row_index + 1):
             next(rows)
 
+        mapping = COLUMN_MAPPINGS.get(detection.format_type, COLUMN_MAPPINGS[UNKNOWN])
         items = []
         for row in rows:
-            part_number, description, qty, unit_price, total_price = (row + (None,) * 5)[:5]
+            part_number = _mapped_value(row, mapping, "part_number")
+            description = _mapped_value(row, mapping, "description")
+            qty = _mapped_value(row, mapping, "qty")
+            unit_price = _mapped_value(row, mapping, "unit_price")
+            total_price = _mapped_value(row, mapping, "total_price")
 
             # Stop at first fully empty row
             if all(v is None for v in (part_number, description, qty, unit_price, total_price)):
@@ -40,9 +73,9 @@ def parse(file_path: Path, detection: BoQDetectionResult) -> list[BoQLineItem]:
             items.append(BoQLineItem(
                 part_number=str(part_number) if part_number is not None else "",
                 description=str(description) if description is not None else "",
-                qty=int(float(qty)) if qty is not None else 0,
-                unit_price_usd=float(unit_price) if unit_price is not None else 0.0,
-                total_price_usd=float(total_price) if total_price is not None else 0.0,
+                qty=int(_number(qty)),
+                unit_price_usd=_number(unit_price),
+                total_price_usd=_number(total_price),
                 line_type=line_type,
             ))
     finally:

@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
 
 from app.engines.e1.step2_missing_docs import detect_missing_documents
+from app.engines.e1.language_detector import detect_language
 from app.engines.e1.step4_legal_trap_flagger import detect_legal_traps
 from app.engines.e1.step8_sector_detector import detect_sector
 from app.engines.e1.step9_framework_selector import select_frameworks
@@ -50,6 +51,11 @@ def test_step8_unknown_client_is_general():
     assert result["confidence"] == 0.3
 
 
+def test_language_detector_identifies_arabic_text():
+    text = "تلتزم الجهة بتطبيق ضوابط الأمن السيبراني وحماية البيانات."
+    assert detect_language(text) == "arabic"
+
+
 # ---------------------------------------------------------------------------
 # Step 9 — select_frameworks
 # ---------------------------------------------------------------------------
@@ -64,6 +70,18 @@ def test_step9_telecom_returns_non_empty_string_list():
 def test_step9_general_returns_list():
     result = select_frameworks("general", [])
     assert isinstance(result, list)
+
+
+def test_step9_arabic_language_includes_dgcl_and_sacs():
+    result = select_frameworks("general", [], language="arabic")
+    assert "DGCL" in result
+    assert "SACS" in result
+
+
+def test_step9_related_standards_can_select_dgcl_and_sacs():
+    result = select_frameworks("government", ["DGCL cybersecurity guide", "SACS control system standard"])
+    assert "DGCL" in result
+    assert "SACS" in result
 
 
 # ---------------------------------------------------------------------------

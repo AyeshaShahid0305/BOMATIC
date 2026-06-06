@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.engines.e1.extractors import extract_text
+from app.engines.e1.language_detector import detect_language
 from app.engines.e1.step1_classifier import classify_file
 from app.engines.e1.step2_missing_docs import detect_missing_documents
 from app.engines.e1.step3_requirements_extractor import extract_requirements
@@ -307,12 +308,13 @@ async def checkpoint1_approve(opportunity_id: str, db: Session = Depends(get_db)
     documents = db.query(Document).filter(Document.opportunity_id == opportunity.id).all()
     texts = {doc.filename: doc.text_content for doc in documents if doc.text_content}
     sector_result = detect_sector(client_name, texts)
+    language = detect_language(texts)
 
     # Step 9: framework selection
     related_standards: list[str] = []
     for req in requirements:
         related_standards.extend(req.get("related_standards", []))
-    frameworks = select_frameworks(sector_result["sector"], related_standards)
+    frameworks = select_frameworks(sector_result["sector"], related_standards, language=language)
 
     # Step 10: compliance matrix generation (AI call inside — offloaded to threadpool)
     matrix_result = await asyncio.get_running_loop().run_in_executor(
@@ -698,11 +700,12 @@ async def checkpoint2_revise(
     client_name = opportunity.client_name or ""
 
     sector_result = detect_sector(client_name, texts)
+    language = detect_language(texts)
 
     related_standards: list[str] = []
     for req in requirements:
         related_standards.extend(req.get("related_standards", []))
-    frameworks = select_frameworks(sector_result["sector"], related_standards)
+    frameworks = select_frameworks(sector_result["sector"], related_standards, language=language)
 
     matrix_result = await asyncio.get_running_loop().run_in_executor(
         None,

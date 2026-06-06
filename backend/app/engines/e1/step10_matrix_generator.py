@@ -10,6 +10,8 @@ _FRAMEWORK_FILE_MAP = {
     "NCA_ECC2": "NCA_ECC2_2024.json",
     "SAMA_CSF": "SAMA_CSF.json",
     "ISO_27001": "ISO_27001_2022_Annex_A.json",
+    "DGCL": "DGCL.json",
+    "SACS": "SACS.json",
 }
 
 _SIMILARITY_THRESHOLD = 0.08

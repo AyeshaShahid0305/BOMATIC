@@ -1,0 +1,62 @@
+[
+  {
+    "id": "DGCL-1",
+    "name": "Cybersecurity Governance and Accountability",
+    "domain": "Governance",
+    "description": "The organization shall define cybersecurity governance responsibilities, assign accountable owners, and maintain oversight of cyber risk management activities."
+  },
+  {
+    "id": "DGCL-2",
+    "name": "Asset Inventory and Classification",
+    "domain": "Asset Management",
+    "description": "Information assets, systems, and services shall be inventoried, classified by business criticality, and reviewed periodically for accuracy."
+  },
+  {
+    "id": "DGCL-3",
+    "name": "Identity and Access Control",
+    "domain": "Access Management",
+    "description": "Access to systems and data shall follow least privilege, role-based approval, periodic review, and secure authentication requirements."
+  },
+  {
+    "id": "DGCL-4",
+    "name": "Secure Configuration and Change Control",
+    "domain": "Configuration Management",
+    "description": "Security baselines shall be defined for systems and applications, and all changes shall be approved, tested, and documented before deployment."
+  },
+  {
+    "id": "DGCL-5",
+    "name": "Logging, Monitoring, and Incident Handling",
+    "domain": "Operations",
+    "description": "Security events shall be logged, monitored, and investigated. The organization shall maintain incident response procedures and record corrective actions."
+  },
+  {
+    "id": "DGCL-6",
+    "name": "Vulnerability and Patch Management",
+    "domain": "Technical Controls",
+    "description": "Systems shall be regularly assessed for vulnerabilities, and critical patches shall be prioritized, tracked, and verified within defined service levels."
+  },
+  {
+    "id": "DGCL-7",
+    "name": "Backup, Recovery, and Continuity",
+    "domain": "Resilience",
+    "description": "Critical information and services shall be backed up, recovery procedures tested, and continuity arrangements maintained to support service restoration."
+  },
+  {
+    "id": "DGCL-8",
+    "name": "Third-Party Security Management",
+    "domain": "Supply Chain",
+    "description": "Third-party providers shall be assessed for cybersecurity risk, contractually bound to security requirements, and monitored throughout the engagement."
+  },
+  {
+    "id": "DGCL-9",
+    "name": "Data Protection and Privacy",
+    "domain": "Information Protection",
+    "description": "Sensitive information shall be protected through encryption, access restriction, retention control, and secure handling requirements."
+  },
+  {
+    "id": "DGCL-10",
+    "name": "Awareness and Training",
+    "domain": "People and Awareness",
+    "description": "Users and administrators shall receive cybersecurity awareness and role-specific training at planned intervals and after significant policy changes."
+  }
+]

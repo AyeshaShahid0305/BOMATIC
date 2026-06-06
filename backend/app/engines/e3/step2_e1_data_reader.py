@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.engines.e1.language_detector import detect_language
 from app.schemas.pipeline import deserialize_pipeline_state_outputs
 
 
@@ -71,6 +72,7 @@ def read_e1_data(session_id: str, db: Session) -> dict:
 
     return {
         "rfp_text": rfp_text,
+        "language": detect_language(rfp_text),
         "requirements": requirements,
         "legal_traps": legal_traps,
         "missing_documents": missing_documents,

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "SACS-1",
+    "name": "OT Cybersecurity Governance",
+    "domain": "Governance",
+    "description": "Industrial cybersecurity governance responsibilities shall be defined, monitored, and aligned with operational safety and business continuity objectives."
+  },
+  {
+    "id": "SACS-2",
+    "name": "Control System Network Segmentation",
+    "domain": "Network Security",
+    "description": "Operational technology networks shall be segmented from enterprise environments, with controlled conduits between zones and monitored trust boundaries."
+  },
+  {
+    "id": "SACS-3",
+    "name": "Privileged and Remote Access",
+    "domain": "Access Management",
+    "description": "Privileged access to control systems shall be tightly controlled, logged, approved, and secured through strong authentication and session oversight."
+  },
+  {
+    "id": "SACS-4",
+    "name": "Change Management for OT Assets",
+    "domain": "Configuration Management",
+    "description": "Changes to field devices, controllers, historians, and engineering workstations shall be assessed, approved, tested, and documented before deployment."
+  },
+  {
+    "id": "SACS-5",
+    "name": "Threat Monitoring and Logging",
+    "domain": "Operations",
+    "description": "Security-relevant events from industrial assets shall be collected, monitored, and correlated to identify malicious activity or unsafe conditions."
+  },
+  {
+    "id": "SACS-6",
+    "name": "Incident Response for Industrial Environments",
+    "domain": "Incident Management",
+    "description": "The organization shall maintain OT-specific incident response playbooks covering containment, escalation, forensic preservation, and operational recovery."
+  },
+  {
+    "id": "SACS-7",
+    "name": "Backup and Restoration of OT Systems",
+    "domain": "Resilience",
+    "description": "Critical control system configurations, logic, and supporting services shall be backed up and restoration procedures tested regularly."
+  },
+  {
+    "id": "SACS-8",
+    "name": "Supplier and Integrator Security",
+    "domain": "Supply Chain",
+    "description": "Vendors, integrators, and maintenance providers shall be assessed, contractually controlled, and supervised when accessing OT environments."
+  },
+  {
+    "id": "SACS-9",
+    "name": "Physical Security for Control Assets",
+    "domain": "Physical Security",
+    "description": "Control cabinets, network closets, and engineering workstations shall be physically protected against unauthorized access and tampering."
+  },
+  {
+    "id": "SACS-10",
+    "name": "Asset Inventory and Vulnerability Management",
+    "domain": "Asset Management",
+    "description": "Industrial assets shall be inventoried, monitored for vulnerabilities, and maintained under a risk-based remediation program."
+  }
+]

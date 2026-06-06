@@ -4,6 +4,8 @@ import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 
 from .models import BoQDetectionResult, PricingSummary
+from .step1_template_detector import UNKNOWN
+from .step2_boq_parser import COLUMN_MAPPINGS
 
 _OUTPUT_DIR = Path(__file__).parent / "output"
 _SI_DISCOUNT = 0.15
@@ -51,6 +53,11 @@ def write_output(
 
     # detection.header_row_index is 0-based; openpyxl rows are 1-based
     header_row = detection.header_row_index + 1
+
+    if detection.format_type != UNKNOWN and detection.format_type in COLUMN_MAPPINGS:
+        _write_mapped_client_rows(ws, summary, detection, header_row)
+        wb.save(output_path)
+        return str(output_path)
 
     # Write our column headers over the template's original header row
     for col, title in enumerate(header_cols, start=1):
@@ -150,6 +157,51 @@ def write_output(
 
     wb.save(output_path)
     return str(output_path)
+
+
+def _write_mapped_client_rows(
+    ws,
+    summary: PricingSummary,
+    detection: BoQDetectionResult,
+    header_row: int,
+) -> None:
+    mapping = COLUMN_MAPPINGS[detection.format_type]
+    data_rows = [
+        row_index
+        for row_index in range(header_row + 1, ws.max_row + 1)
+        if any(
+            ws.cell(row=row_index, column=column_index + 1).value is not None
+            for column_index in mapping.values()
+        )
+    ]
+    rows_by_sku = {
+        str(ws.cell(row=row_index, column=mapping["part_number"] + 1).value).strip().lower(): row_index
+        for row_index in data_rows
+        if ws.cell(row=row_index, column=mapping["part_number"] + 1).value is not None
+    }
+    used_rows: set[int] = set()
+
+    for match in summary.matched_items:
+        row_index = rows_by_sku.get(match.sku.strip().lower())
+        if row_index in used_rows:
+            row_index = None
+        if row_index is None:
+            row_index = next((row for row in data_rows if row not in used_rows), None)
+        if row_index is None:
+            break
+
+        used_rows.add(row_index)
+        qty = match.rfp_item.quantity if match.rfp_item.quantity is not None else 1.0
+        line_total = round(qty * match.unit_price * (1 - _SI_DISCOUNT), 2)
+        values = {
+            "part_number": match.sku,
+            "description": match.rfp_item.description,
+            "qty": qty,
+            "unit_price": match.unit_price,
+            "total_price": line_total,
+        }
+        for field, value in values.items():
+            ws.cell(row=row_index, column=mapping[field] + 1, value=value)
 
 
 def _first_empty_row(ws, from_row: int) -> int:

@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     catalog_data_source: Path = _E2_DATA_DIR / "catalog.json"
     eox_data_source: Path = _E2_DATA_DIR / "eox.json"
     fx_data_source: Path = _E2_DATA_DIR / "fx_rates.json"
+    e5_base_vlan: int = 100
+    e5_base_subnet: str = "10.0.0.0/8"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

@@ -1,7 +1,9 @@
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -10,8 +12,10 @@ from app.api.reviewer import run_e4_reviewer
 from app.config import get_settings
 from app.db import get_db
 from app.engines.e4 import run_e4_pipeline
+from app.engines.e4.response_parser import parse_rfi_response
 from app.models.opportunity import Opportunity
 from app.models.pipeline_state import PipelineState
+from app.schemas.pipeline import E4BaselineArtifact
 from sqlalchemy.orm.attributes import flag_modified
 
 _OUTPUT_DIR = Path(__file__).parent.parent / "engines" / "e4" / "output"
@@ -48,6 +52,7 @@ async def generate_rfi(
                     'must_have_count': result.get('must_have_count', 0),
                     'nice_to_have_count': result.get('nice_to_have_count', 0),
                     'output_file': result.get('output_file', ''),
+                    'questions': result.get('questions', []),
                 }
                 pipeline_state.step_outputs = outputs
                 pipeline_state.current_step = max(pipeline_state.current_step, 11)
@@ -60,6 +65,46 @@ async def generate_rfi(
                 flag_modified(pipeline_state, 'step_outputs')
                 db.commit()
     return result
+
+
+@router.post("/{opportunity_id}/responses")
+async def upload_rfi_response(
+    opportunity_id: str,
+    response_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    opportunity, pipeline = _get_e4_opportunity_and_pipeline(opportunity_id, db)
+    e4_data = (pipeline.step_outputs or {}).get("e4")
+    if not e4_data:
+        raise HTTPException(status_code=409, detail="Generate the E4 questionnaire before uploading responses.")
+
+    filename = Path(response_file.filename or "").name
+    extension = Path(filename).suffix.lower()
+    if extension not in {".xlsx", ".pdf"}:
+        raise HTTPException(status_code=400, detail="RFI response must be an XLSX or PDF file.")
+
+    temp_dir = Path(tempfile.mkdtemp())
+    try:
+        response_path = temp_dir / filename
+        response_path.write_bytes(await response_file.read())
+        try:
+            artifact = parse_rfi_response(
+                response_path,
+                e4_data.get("questions", []),
+                filename,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Unable to parse RFI response: {exc}") from exc
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    outputs = dict(pipeline.step_outputs or {})
+    outputs["e4_baseline"] = artifact.model_dump(mode="json")
+    pipeline.step_outputs = outputs
+    flag_modified(pipeline, "step_outputs")
+    db.commit()
+
+    return E4BaselineArtifact.model_validate(outputs["e4_baseline"])
 
 
 @router.get("/download/{filename}")

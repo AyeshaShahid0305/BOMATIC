@@ -71,6 +71,13 @@ def read_context(session_id: str | None, db: Session) -> dict:
     rfi_categories: list = e4_data.get('categories', [])
     rfi_question_count: int = e4_data.get('total_questions', 0)
     has_e4_data: bool = bool(e4_data)
+    e4_baseline: dict = pipeline.step_outputs.get("e4_baseline", {})
+    rfi_requirements: list = e4_baseline.get("requirements", [])
+    rfi_gaps: list = [
+        requirement
+        for requirement in rfi_requirements
+        if requirement.get("status") in {"missing", "insufficient"}
+    ]
 
     project_name = opportunity.project_name or ""
     if not project_name and documents:
@@ -88,4 +95,7 @@ def read_context(session_id: str | None, db: Session) -> dict:
         "rfi_categories": rfi_categories,
         "rfi_question_count": rfi_question_count,
         "has_e4_data": has_e4_data,
+        "rfi_requirements": rfi_requirements,
+        "rfi_gaps": rfi_gaps,
+        "has_e4_baseline": bool(e4_baseline),
     }

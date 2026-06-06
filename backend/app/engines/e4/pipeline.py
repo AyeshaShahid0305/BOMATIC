@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+from dataclasses import asdict
 
 from sqlalchemy.orm import Session
 
@@ -23,4 +24,5 @@ def run_e4_pipeline(session_id: Optional[str], db: Session) -> dict:
         "generated_from": questionnaire.generated_from,
         "must_have_count": sum(1 for q in questionnaire.questions if q.priority == "must_have"),
         "nice_to_have_count": sum(1 for q in questionnaire.questions if q.priority == "nice_to_have"),
+        "questions": [asdict(question) for question in questionnaire.questions],
     }

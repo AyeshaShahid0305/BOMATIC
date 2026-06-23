@@ -263,3 +263,196 @@ def extract_requirements(
         key=lambda r: (r.source_file, r.confidence),
         reverse=True,
     )
+
+
+# ---------------------------------------------------------------------------
+# Part E â€” Dual parser system
+# ---------------------------------------------------------------------------
+
+def _normalize_words(text: str) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"\b[a-z0-9]+\b", text.lower())
+        if token
+    }
+
+
+def _jaccard_similarity(left: str, right: str) -> float:
+    left_tokens = _normalize_words(left)
+    right_tokens = _normalize_words(right)
+    if not left_tokens and not right_tokens:
+        return 1.0
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+
+def _clone_requirement(
+    requirement: Requirement,
+    *,
+    source_file: str | None = None,
+) -> Requirement:
+    return Requirement(
+        id=requirement.id,
+        text=requirement.text,
+        classification=requirement.classification,
+        confidence=requirement.confidence,
+        source_file=source_file if source_file is not None else requirement.source_file,
+        page=requirement.page,
+        indicators=list(requirement.indicators),
+        section=requirement.section,
+        related_standards=list(requirement.related_standards),
+    )
+
+
+def python_parser(text: str, source_file: str = "python_parser") -> list[Requirement]:
+    high_conf, _ambiguous = extract_requirements_from_text(
+        text,
+        source_file,
+        opportunity_id="python_parser",
+    )
+    parsed = []
+    for requirement in high_conf:
+        parsed.append(_clone_requirement(requirement, source_file="python_parser"))
+    return parsed
+
+
+def ai_parser(text: str, source_file: str = "ai_parser") -> list[Requirement]:
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        logger.warning("ANTHROPIC_API_KEY is not set - skipping ai_parser")
+        return []
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        system_prompt = (
+            "You are a requirements extraction engine.\n"
+            "Extract ALL requirements from the provided document text, including implied ones.\n"
+            "Return JSON only. Do not include markdown, commentary, or code fences.\n"
+            "Each item must have these fields exactly:\n"
+            'text, classification, confidence, implied\n'
+            "Rules:\n"
+            '- classification must be one of "mandatory", "optional", or "conditional"\n'
+            "- confidence must be a float between 0 and 1\n"
+            "- implied must be true when the requirement is inferred rather than directly stated\n"
+        )
+        response = client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "Extract the requirements from this document text.\n"
+                        "Return JSON only.\n\n"
+                        f"{text}"
+                    ),
+                }
+            ],
+        )
+        raw_text = response.content[0].text if response.content else "[]"
+        items = json.loads(raw_text)
+        results: list[Requirement] = []
+        for i, item in enumerate(items, 1):
+            implied = bool(item.get("implied", False))
+            text_value = str(item.get("text", "")).strip()
+            classification = str(item.get("classification", "mandatory"))
+            if classification not in {"mandatory", "optional", "conditional"}:
+                continue
+            confidence = float(item.get("confidence", 0.0))
+            results.append(
+                Requirement(
+                    id=f"AI-R-{i:03d}",
+                    text=text_value,
+                    classification=classification,  # type: ignore[arg-type]
+                    confidence=confidence,
+                    source_file=source_file,
+                    page=0,
+                    indicators=["ai_implied"] if implied else ["ai_explicit"],
+                    section="",
+                    related_standards=_extract_standard_refs(text_value),
+                )
+            )
+        return results
+    except Exception as exc:
+        logger.warning("ai_parser failed (%s): %s", type(exc).__name__, exc)
+        return []
+
+
+def compare_and_merge(
+    python_results: list[Requirement],
+    ai_results: list[Requirement],
+) -> dict:
+    confirmed: list[Requirement] = []
+    python_only: list[Requirement] = []
+    ai_only: list[Requirement] = []
+    conflicts: list[dict] = []
+
+    unmatched_python = list(python_results)
+    matched_python_indexes: set[int] = set()
+
+    for ai_req in ai_results:
+        best_index: int | None = None
+        best_score = 0.0
+        for idx, py_req in enumerate(unmatched_python):
+            if idx in matched_python_indexes:
+                continue
+            score = _jaccard_similarity(py_req.text, ai_req.text)
+            if score > best_score:
+                best_score = score
+                best_index = idx
+
+        if best_index is not None and best_score >= 0.8:
+            matched_python_indexes.add(best_index)
+            python_req = unmatched_python[best_index]
+            if python_req.classification == ai_req.classification:
+                confirmed.append(_clone_requirement(python_req))
+            else:
+                conflicts.append(
+                    {
+                        "python_version": _clone_requirement(python_req),
+                        "ai_version": _clone_requirement(ai_req),
+                    }
+                )
+        else:
+            ai_only.append(_clone_requirement(ai_req, source_file="ai_only_REVIEW"))
+
+    for idx, python_req in enumerate(unmatched_python):
+        if idx not in matched_python_indexes:
+            python_only.append(_clone_requirement(python_req))
+
+    return {
+        "confirmed": confirmed,
+        "python_only": python_only,
+        "ai_only": ai_only,
+        "conflicts": conflicts,
+    }
+
+
+def dual_parse_rfp(texts: dict[str, str], opportunity_id: str) -> dict:
+    full_text = "\n\n".join(texts.values())
+    python_results = python_parser(full_text)
+    ai_results = ai_parser(full_text)
+    merged = compare_and_merge(python_results, ai_results)
+
+    confirmed = merged["confirmed"]
+    python_only = merged["python_only"]
+    ai_only = merged["ai_only"]
+    conflicts = merged["conflicts"]
+
+    return {
+        "opportunity_id": opportunity_id,
+        "confirmed": confirmed,
+        "python_only": python_only,
+        "ai_only": ai_only,
+        "conflicts": conflicts,
+        "total_found": len(confirmed) + len(python_only) + len(ai_only),
+        "needs_review_count": len(ai_only) + len(conflicts),
+        "summary": {
+            "confirmed_count": len(confirmed),
+            "python_only_count": len(python_only),
+            "ai_only_count": len(ai_only),
+            "conflict_count": len(conflicts),
+        },
+    }

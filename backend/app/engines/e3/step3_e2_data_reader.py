@@ -1,33 +1,37 @@
-from app.engines.e2.models import PricingSummary
+from app.schemas.pipeline import E2PricingArtifact
 
 _SI_DISCOUNT = 0.15  # must match step4_gap_analyzer._SI_DISCOUNT_RATE
 
 
-def read_e2_data(summary: PricingSummary) -> dict:
-    matched_items = []
-    for m in summary.matched_items:
-        qty = m.rfp_item.quantity if m.rfp_item.quantity is not None else 1.0
-        matched_items.append({
-            "sku": m.sku,
-            "product_name": m.product_name,
-            "qty": qty,
-            "unit_price": m.unit_price,
-            "line_total": round(qty * m.unit_price * (1 - _SI_DISCOUNT), 2),
-        })
-
+def read_e2_data(artifact: E2PricingArtifact) -> dict:
+    matched_items = [
+        {
+            "sku": item.sku,
+            "product_name": item.product_name,
+            "qty": item.quantity if item.quantity is not None else 1.0,
+            "unit_price": item.unit_price,
+            "line_total": round(
+                (item.quantity if item.quantity is not None else 1.0)
+                * item.unit_price
+                * (1 - _SI_DISCOUNT),
+                2,
+            ),
+        }
+        for item in artifact.matched_items
+    ]
     unmatched_items = [
         {
-            "description": m.rfp_item.description,
-            "qty": m.rfp_item.quantity,
+            "description": item.description,
+            "qty": item.quantity,
         }
-        for m in summary.unmatched_items
+        for item in artifact.unmatched_items
     ]
 
     return {
         "matched_items": matched_items,
         "unmatched_items": unmatched_items,
-        "subtotal": summary.subtotal,
-        "discount_amount": summary.discount_amount,
-        "total": summary.total,
-        "currency": summary.currency,
+        "subtotal": artifact.subtotal,
+        "discount_amount": artifact.discount_amount,
+        "total": artifact.total,
+        "currency": artifact.currency,
     }

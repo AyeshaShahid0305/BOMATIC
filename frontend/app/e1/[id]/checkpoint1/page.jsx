@@ -267,6 +267,100 @@ function RiskFlagsSection({ flags }) {
 }
 
 // ---------------------------------------------------------------------------
+// Section E: Dual Parser Review
+// ---------------------------------------------------------------------------
+
+function DualParserSection({ dualParse }) {
+  if (dualParse == null) {
+    return <p className="text-sm text-gray-400">Dual parser results not available for this opportunity.</p>;
+  }
+
+  const aiOnly = dualParse.ai_only ?? [];
+  const conflicts = dualParse.conflicts ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-4 gap-3">
+        <div className="rounded-lg bg-green-50 p-3">
+          <div className="text-2xl font-bold text-green-700">{dualParse.confirmed_count ?? 0}</div>
+          <div className="mt-1 text-xs text-gray-500">Confirmed</div>
+        </div>
+        <div className="rounded-lg bg-blue-50 p-3">
+          <div className="text-2xl font-bold text-blue-700">{dualParse.python_only_count ?? 0}</div>
+          <div className="mt-1 text-xs text-gray-500">Python only</div>
+        </div>
+        <div className="rounded-lg bg-orange-50 p-3">
+          <div className="text-2xl font-bold text-orange-700">{dualParse.ai_only_count ?? 0}</div>
+          <div className="mt-1 text-xs text-gray-500">AI only needs review</div>
+        </div>
+        <div className="rounded-lg bg-red-50 p-3">
+          <div className="text-2xl font-bold text-red-700">{dualParse.conflict_count ?? 0}</div>
+          <div className="mt-1 text-xs text-gray-500">Conflicts</div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-medium text-orange-700">AI found  Python missed (needs review)</h3>
+        {aiOnly.length > 0 ? (
+          <div className="border-l-4 border-orange-400">
+            <TableWrap heads={["ID", "Requirement", "Classification", "Confidence"]}>
+              {aiOnly.map((item, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{item.id}</td>
+                  <td className="px-4 py-3 max-w-md text-gray-700">{item.text}</td>
+                  <td className="px-4 py-3">
+                    <Badge
+                      label={item.classification}
+                      colorClass={CLASSIFICATION_CLASSES[item.classification] ?? "bg-gray-100 text-gray-600"}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                    {item.confidence != null ? `${(item.confidence * 100).toFixed(0)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </TableWrap>
+          </div>
+        ) : (
+          <EmptyBadge text="No AI-only requirements  parsers agree" />
+        )}
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-medium text-red-700">Classification conflicts  engineer must decide</h3>
+        {conflicts.length > 0 ? (
+          <div>
+            {conflicts.map((conflict, i) => (
+              <div key={i} className="mb-3 rounded-lg border border-red-200 bg-red-50 p-4">
+                <div className="mb-3 text-sm text-gray-800">{conflict.python_version.text}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="mb-1 text-xs font-medium text-gray-500">Python says:</div>
+                    <Badge
+                      label={conflict.python_version.classification}
+                      colorClass={CLASSIFICATION_CLASSES[conflict.python_version.classification] ?? "bg-gray-100 text-gray-600"}
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs font-medium text-gray-500">AI says:</div>
+                    <Badge
+                      label={conflict.ai_version.classification}
+                      colorClass={CLASSIFICATION_CLASSES[conflict.ai_version.classification] ?? "bg-gray-100 text-gray-600"}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyBadge text="No classification conflicts" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -442,6 +536,11 @@ export default function Checkpoint1Page() {
         {/* Section 3 */}
         <SectionCard title="Section C — Requirements Summary">
           <RequirementsSummarySection reqs={outputs["3"]} />
+        </SectionCard>
+
+        {/* Section E  Dual Parser Review */}
+        <SectionCard title="Section E  Dual Parser Cross-Validation">
+          <DualParserSection dualParse={outputs["dual_parse"]} />
         </SectionCard>
 
         {/* Section 4 */}

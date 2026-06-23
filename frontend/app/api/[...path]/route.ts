@@ -12,8 +12,9 @@ function buildBackendUrl(request: NextRequest, pathSegments: string[]) {
 
 async function proxyToBackend(
   request: NextRequest,
-  context: { params: { path: string[] } },
+  context: { params: Promise<{ path: string[] }> },
 ) {
+  const { path } = await context.params;
   const apiKey = process.env.BOMATIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -22,7 +23,7 @@ async function proxyToBackend(
     );
   }
 
-  const backendUrl = buildBackendUrl(request, context.params.path);
+  const backendUrl = buildBackendUrl(request, path);
   const headers = new Headers(request.headers);
   headers.delete("host");
   headers.delete("content-length");
@@ -57,30 +58,30 @@ async function proxyToBackend(
   });
 }
 
-export function GET(request: NextRequest, context: { params: { path: string[] } }) {
+export function GET(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function POST(request: NextRequest, context: { params: { path: string[] } }) {
+export function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function PUT(request: NextRequest, context: { params: { path: string[] } }) {
+export function PUT(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function PATCH(request: NextRequest, context: { params: { path: string[] } }) {
+export function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function DELETE(request: NextRequest, context: { params: { path: string[] } }) {
+export function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function OPTIONS(request: NextRequest, context: { params: { path: string[] } }) {
+export function OPTIONS(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }
 
-export function HEAD(request: NextRequest, context: { params: { path: string[] } }) {
+export function HEAD(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   return proxyToBackend(request, context);
 }

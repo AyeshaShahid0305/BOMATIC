@@ -1,7 +1,7 @@
 from .models import GBBResult, ProposalSection
 
 _PLACEHOLDER = "[Section content to be completed manually]"
-_OPTIONAL_PREFIX = "OPTIONAL — REMOVE IF NOT NEEDED\n\n"
+_OPTIONAL_PREFIX = "OPTIONAL SECTION NOT INCLUDED\n\n"
 
 _COMMERCIAL_SECTION_TITLE = "Commercial Proposal"
 _COMPLIANCE_SECTION_TITLE = "Compliance Matrix"
@@ -125,7 +125,7 @@ def assemble_proposal(
             content = compliance_summary
 
         if not section.required and content == _PLACEHOLDER:
-            content = _OPTIONAL_PREFIX + content
+            content = _OPTIONAL_PREFIX + "No content supplied for this optional section."
 
         assembled.append({
             "id": section.id,

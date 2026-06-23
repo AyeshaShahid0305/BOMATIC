@@ -15,7 +15,7 @@ from app.engines.e1.extractors import extract_text
 from app.engines.e1.language_detector import detect_language
 from app.engines.e1.step1_classifier import classify_file
 from app.engines.e1.step2_missing_docs import detect_missing_documents
-from app.engines.e1.step3_requirements_extractor import extract_requirements
+from app.engines.e1.step3_requirements_extractor import extract_requirements, dual_parse_rfp
 from app.engines.e1.step4_legal_trap_flagger import detect_legal_traps
 from app.engines.e1.step5_eval_criteria_extractor import extract_evaluation_criteria
 from app.engines.e1.step8_sector_detector import detect_sector
@@ -174,6 +174,9 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
     requirements_payload = [dataclasses.asdict(r) for r in reqs]
     flags_payload = [dataclasses.asdict(f) for f in flags]
 
+    # Dual parser — runs python + AI parsers independently and cross-validates
+    dual_parse_result = dual_parse_rfp(texts, opportunity_id=opportunity_id)
+
     # Persist: validate the full JSONB payload before assigning it to the database column.
     outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
         mode="json",
@@ -187,6 +190,25 @@ def run_e1_pipeline(opportunity_id: str, db: Session = Depends(get_db)):
             "3": requirements_payload,
             "4": flags_payload,
             "5": eval_criteria,
+            "dual_parse": {
+                "confirmed_count": dual_parse_result["summary"]["confirmed_count"],
+                "python_only_count": dual_parse_result["summary"]["python_only_count"],
+                "ai_only_count": dual_parse_result["summary"]["ai_only_count"],
+                "conflict_count": dual_parse_result["summary"]["conflict_count"],
+                "total_found": dual_parse_result["total_found"],
+                "needs_review_count": dual_parse_result["needs_review_count"],
+                "ai_only": [
+                    {"id": r.id, "text": r.text, "classification": r.classification, "confidence": r.confidence}
+                    for r in dual_parse_result["ai_only"]
+                ],
+                "conflicts": [
+                    {
+                        "python_version": {"id": c["python_version"].id, "text": c["python_version"].text, "classification": c["python_version"].classification},
+                        "ai_version": {"id": c["ai_version"].id, "text": c["ai_version"].text, "classification": c["ai_version"].classification},
+                    }
+                    for c in dual_parse_result["conflicts"]
+                ],
+            },
             "e1": _build_e1_output(
                 texts=texts,
                 requirements=requirements_payload,
@@ -242,6 +264,39 @@ def get_pipeline_state(opportunity_id: str, db: Session = Depends(get_db)):
         "current_step": pipeline.current_step,
         "step_outputs": serialize_pipeline_state_outputs(outputs),
         "updated_at": pipeline.updated_at.isoformat(),
+    }
+
+
+@router.get("/{opportunity_id}/dual-parse")
+def get_dual_parse_result(opportunity_id: str, db: Session = Depends(get_db)):
+    """
+    Return the dual parser cross-validation result for an opportunity.
+    Shows confirmed count, AI-only requirements needing review, and conflicts.
+    Available after run_e1_pipeline() completes (current_step >= 4).
+    """
+    opportunity, pipeline = _get_opportunity_and_pipeline(opportunity_id, db)
+
+    if pipeline.current_step < 4:
+        raise HTTPException(
+            status_code=404,
+            detail="Dual parse not yet run. Complete Steps 1-4 first.",
+        )
+
+    outputs = deserialize_pipeline_state_outputs(pipeline.step_outputs).model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    dual_parse = outputs.get("dual_parse")
+    if not dual_parse:
+        raise HTTPException(
+            status_code=404,
+            detail="Dual parse result not found. Re-run the pipeline to generate it.",
+        )
+
+    return {
+        "opportunity_id": opportunity_id,
+        "dual_parse": dual_parse,
     }
 
 
